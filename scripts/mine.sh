@@ -1,0 +1,1 @@
+rooch move run --function $PKG::gold_miner::mine --args "object:$TREASURY" --args "object:$MINER"
