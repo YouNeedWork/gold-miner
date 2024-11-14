@@ -1,10 +1,11 @@
 module gold_miner::daily_check_in {
-
     use std::signer::address_of;
     use moveos_std::event;
     use moveos_std::object::{account_named_object_id, ObjectID, Object};
     use moveos_std::object;
     use moveos_std::timestamp::now_seconds;
+    use rooch_framework::account_coin_store;
+    use gold_miner::gold;
 
     const E_ALREADY_CHECKED_IN: u64 = 1;
     const E_NOT_ENOUGH_DAYS: u64 = 2;
@@ -21,12 +22,17 @@ module gold_miner::daily_check_in {
         total_days: u64
     }
 
-    public fun first_day_check_in(user: &mut signer) {
+    public fun first_day_check_in(
+        user: &mut signer, treasury_obj: &mut Object<gold::Treasury>
+    ) {
         let user_address = address_of(user);
         let object_id = account_named_object_id<CheckInRecord>(user_address);
         assert!(
-            object::exists_object_with_type<CheckInRecord>(object_id), E_ALREADY_CHECKED_IN
+            object::exists_object_with_type<CheckInRecord>(object_id),
+            E_ALREADY_CHECKED_IN
         );
+
+        let treasury = object::borrow(treasury_obj);
 
         let record = CheckInRecord {
             owner: address_of(user),
@@ -46,7 +52,9 @@ module gold_miner::daily_check_in {
     }
 
     public fun check_in(
-        user: &mut signer, record: &mut Object<CheckInRecord>
+        user: &mut signer,
+        record: &mut Object<CheckInRecord>,
+        treasury_obj: &mut Object<gold::Treasury>
     ) {
         let current_time = now_seconds();
         let today_start = current_time - (current_time % 86400000);
@@ -58,6 +66,12 @@ module gold_miner::daily_check_in {
         record.last_check_in = current_time;
         record.total_days = record.total_days + 1;
 
+        let treasury = object::borrow_mut(treasury_obj);
+
+        let amount = 100 * 1_000_000;
+        let gold_mine = gold::mint(treasury, amount);
+        account_coin_store::deposit(address_of(user), gold_mine);
+
         event::emit(
             CheckInEvent {
                 user: address_of(user),
@@ -67,7 +81,16 @@ module gold_miner::daily_check_in {
         );
 
         if (record.total_days == 7) {
-        } else if (record.total_days == 30) {}
+            //TODO: lack event emit
+            let amount = 1000 * 1_000_000;
+            let gold_mine = gold::mint(treasury, amount);
+            account_coin_store::deposit(address_of(user), gold_mine);
+        } else if (record.total_days == 30) {
+            //TODO: lack event emit
+            let amount = 10000 * 1_000_000;
+            let gold_mine = gold::mint(treasury, amount);
+            account_coin_store::deposit(address_of(user), gold_mine);
+        }
     }
 
     #[view]

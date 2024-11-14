@@ -5,6 +5,9 @@ module gold_miner::gold {
     use rooch_framework::coin::{Self, CoinInfo, Coin};
 
     friend gold_miner::gold_miner;
+    friend gold_miner::boost_nft;
+    friend gold_miner::auto_miner;
+    friend gold_miner::daily_check_in;
 
     const TOTAL_SUPPLY: u256 =
         115792089237316195423570985008687907853269984665640564039457584007913129639935;
@@ -35,5 +38,9 @@ module gold_miner::gold {
 
     public(friend) fun burn(treasury: &mut Treasury, c: Coin<Gold>) {
         coin::burn(&mut treasury.coin_info, c)
+    }
+
+    public fun basic_mining_amount(): u256 {
+        1 * 1_000_000
     }
 }

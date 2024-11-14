@@ -6,10 +6,13 @@ version = "0.0.1"
 MoveStdlib = { git = "https://github.com/rooch-network/rooch.git", subdir = "frameworks/move-stdlib", rev = "main" }
 MoveosStdlib = { git = "https://github.com/rooch-network/rooch.git", subdir = "frameworks/moveos-stdlib", rev = "main" }
 RoochFramework = { git = "https://github.com/rooch-network/rooch.git", subdir = "frameworks/rooch-framework", rev = "main" }
+BitcoinMove = { git = "https://github.com/rooch-network/rooch.git", subdir = "frameworks/bitcoin-move", rev = "main" }
 
 [addresses]
 gold_miner = "0xf8f23f77178aa91cadc63e04ce088351a7a4743e8b0fcde1b1b9ab0a258721b4"
+grow_bitcoin = "0x701c21bf1c8cd5af8c42983890d8ca55e7a820171b8e744c13f2d9998bf76cc3"
 
 std = "0x1"
 moveos_std = "0x2"
 rooch_framework = "0x3"
+bitcoin_move = "0x4"
