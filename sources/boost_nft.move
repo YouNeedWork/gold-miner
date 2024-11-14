@@ -124,15 +124,11 @@ module gold_miner::boost_nft {
 
     // burn a boost NFT
     public fun burn_boost(account: &signer, obj_id: ObjectID) {
-        let obj = object::take_object<BoostNFT>(account,obj_id);
+        let obj = object::take_object<BoostNFT>(account, obj_id);
         //assert!(is_expired(&obj), EBoostExpired);
 
-        let BoostNFT{
-            owner: _,
-            multiplier: _,
-            expiry: _,
-            active: _
-        } =  object::remove(obj);
+        let BoostNFT { owner: _, multiplier: _, expiry: _, active: _ } =
+            object::remove(obj);
 
         //TODO: lack event emit
     }

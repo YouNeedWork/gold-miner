@@ -1,7 +1,7 @@
 module gold_miner::daily_check_in {
     use std::signer::address_of;
     use moveos_std::event;
-    use moveos_std::object::{account_named_object_id, ObjectID, Object};
+    use moveos_std::object::{account_named_object_id, Object};
     use moveos_std::object;
     use moveos_std::timestamp::now_seconds;
     use rooch_framework::account_coin_store;
@@ -23,7 +23,7 @@ module gold_miner::daily_check_in {
     }
 
     public fun first_day_check_in(
-        user: &mut signer, treasury_obj: &mut Object<gold::Treasury>
+        user: &mut signer, _treasury_obj: &mut Object<gold::Treasury>
     ) {
         let user_address = address_of(user);
         let object_id = account_named_object_id<CheckInRecord>(user_address);
@@ -32,7 +32,7 @@ module gold_miner::daily_check_in {
             E_ALREADY_CHECKED_IN
         );
 
-        let treasury = object::borrow(treasury_obj);
+        //let treasury = object::borrow(treasury_obj);
 
         let record = CheckInRecord {
             owner: address_of(user),

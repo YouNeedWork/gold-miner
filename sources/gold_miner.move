@@ -1,7 +1,6 @@
 module gold_miner::gold_miner {
     use std::option;
     use std::u64;
-    use gold_miner::auto_miner;
     use bitcoin_move::bbn;
     use gold_miner::boost_nft;
     use moveos_std::timestamp;
@@ -15,6 +14,8 @@ module gold_miner::gold_miner {
     use rooch_framework::account_coin_store;
 
     use grow_bitcoin::grow_bitcoin;
+
+    friend gold_miner::auto_miner;
 
     /// The logic for gold miner Game
     struct GoldMiner has key, store {
@@ -172,7 +173,6 @@ module gold_miner::gold_miner {
         user: &signer,
         treasury_obj: &mut Object<gold::Treasury>,
         miner_obj: &mut Object<MineInfo>
-        //bbn_obj: option::Option<&Object<bbn::BBNStakeSeal>>
     ) {
         // Get player address
         let player_address = address_of(user);
@@ -221,7 +221,8 @@ module gold_miner::gold_miner {
         bbn_obj: &Object<bbn::BBNStakeSeal>
     ) {
         // Get player address
-        let player_address = address_of(user);
+        // let player_address = address_of(user);
+
         let gold_miner = object::borrow_mut(miner_obj);
         assert!(!gold_miner.auto_miner, 3); // "not in auto miner can tap"
         let bbn = object::borrow(bbn_obj);
@@ -313,8 +314,6 @@ module gold_miner::gold_miner {
         bbn_obj: &Object<bbn::BBNStakeSeal>,
         base_amount: u256
     ): u256 {
-        let player_address = address_of(user);
-
         let gold_miner = object::borrow_mut(miner_obj);
         assert!(gold_miner.auto_miner, 3); // "Not auto miner"
 
@@ -351,4 +350,5 @@ module gold_miner::gold_miner {
 
         amount
     }
+
 }

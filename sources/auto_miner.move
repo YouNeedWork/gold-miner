@@ -1,5 +1,7 @@
 module gold_miner::auto_miner {
     use std::signer::address_of;
+    use bitcoin_move::bbn;
+    use gold_miner::gold_miner;
     use gold_miner::gold_miner::MineInfo;
     use gold_miner::gold::Gold;
     use moveos_std::object::{Object};
@@ -106,46 +108,39 @@ module gold_miner::auto_miner {
         let time_since_last_claim = now - auto_miner.last_claim;
         let rewards = time_since_last_claim * auto_miner.mining_power;
 
-
+        let _harvest_amount =
+            gold_miner::mine_internal(user, treasury_obj, miner_obj, (rewards as u256));
+        auto_miner.last_claim = now;
+        //TODO: lack emit event
     }
 
-    /*
-    public fun claim_rewards(
+    /// With auto miner, hunger is not consumed
+    public fun auto_mine_harvest_bbn(
         user: &signer,
         treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<AutoMiner>
+        miner_obj: &mut Object<MineInfo>,
+        bbn_obj: &Object<bbn::BBNStakeSeal>,
+        auto_miner_obj: &mut Object<AutoMiner>
     ) {
         let now = timestamp::now_seconds();
-        let miner = object::borrow_mut(miner_obj);
-
+        let auto_miner = object::borrow_mut(auto_miner_obj);
         // Check if miner has expired
-        assert!(
-            now <= miner.start_time + miner.duration,
-            E_MINER_EXPIRED
-        );
-
+        assert!(now <= auto_miner.start_time + auto_miner.duration, 1); // "Auto miner expired"
         // Calculate rewards
-        let time_since_last_claim = now - miner.last_claim;
-        let rewards = time_since_last_claim * miner.mining_power * 1_000_000;
+        let time_since_last_claim = now - auto_miner.last_claim;
+        let rewards = time_since_last_claim * auto_miner.mining_power;
 
-        // Update miner state
-        miner.last_claim = now;
-        miner.total_mined = miner.total_mined + rewards;
-
-        // Mint and transfer rewards
-        let treasury = object::borrow_mut(treasury_obj);
-        let reward_coins = gold::mint(treasury, (rewards as u256));
-        account_coin_store::deposit(address_of(user), reward_coins);
-
-        event::emit(
-            ClaimEvent {
-                owner: address_of(user),
-                amount: rewards,
-                total_mined: miner.total_mined
-            }
-        );
+        let _harvest_amount =
+            gold_miner::mine_internal_bbn(
+                user,
+                treasury_obj,
+                miner_obj,
+                bbn_obj,
+                (rewards as u256)
+            );
+        auto_miner.last_claim = now;
+        //TODO: lack emit event
     }
-    */
 
     fun calculate_cost(miner_type: u8, duration: u64): u64 {
         let base_cost =
