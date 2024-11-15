@@ -213,7 +213,7 @@ module gold_miner::gold_miner {
             };
 
         // Require at least 1 energy to mine
-        assert!(hunger >= 1, 2); // "Not enough energy to mine"
+        assert!(hunger >= 1, EERROR_NOT_ENOUGH_ENERGY); // "Not enough energy to mine"
 
         // Update miner object
         gold_miner.hunger = hunger - 1;
