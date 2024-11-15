@@ -2,6 +2,7 @@ module gold_miner::gold_miner {
     use std::option;
     use std::u256;
     use std::u64;
+    use std::vector;
     use moveos_std::account;
     use bitcoin_move::bbn;
     use gold_miner::boost_nft;
@@ -574,21 +575,21 @@ module gold_miner::gold_miner {
     }
 
     #[view]
-    public fun get_invite_info(): &SimpleMap<address, TableVec<address>> {
+    public fun get_invite_info(user:&address): &TableVec<address> {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
 
-        &gold_miner.invite_info
+        simple_map::borrow(&gold_miner.invite_info, user)
     }
 
     #[view]
-    public fun get_invite_reward(): &SimpleMap<address, u256> {
+    public fun get_invite_reward(user:&address): u256 {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
 
-        &gold_miner.invite_reward
+        *simple_map::borrow(&gold_miner.invite_reward, user)
     }
 
 
