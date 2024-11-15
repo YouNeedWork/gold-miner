@@ -11,6 +11,8 @@ module gold_miner::auto_miner {
     use gold_miner::gold;
     use rooch_framework::account_coin_store;
 
+    friend gold_miner::harvest;
+
     // Error codes
     const E_INVALID_MINER_TYPE: u64 = 1;
     const E_MINER_EXPIRED: u64 = 2;
@@ -93,55 +95,7 @@ module gold_miner::auto_miner {
         object::transfer_extend(object::new_named_object(auto_miner), address_of(user));
     }
 
-    /// With auto miner, hunger is not consumed
-    public fun auto_mine_harvest(
-        user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<MineInfo>,
-        auto_miner_obj: &mut Object<AutoMiner>
-    ) {
-        let now = timestamp::now_seconds();
-        let auto_miner = object::borrow_mut(auto_miner_obj);
-        // Check if miner has expired
-        assert!(now <= auto_miner.start_time + auto_miner.duration, 1); // "Auto miner expired"
-        // Calculate rewards
-        let time_since_last_claim = now - auto_miner.last_claim;
-        let rewards = time_since_last_claim * auto_miner.mining_power;
-
-        let _harvest_amount =
-            gold_miner::mine_internal(user, treasury_obj, miner_obj, (rewards as u256));
-        auto_miner.last_claim = now;
-        //TODO: lack emit event
-    }
-
-    /// With auto miner, hunger is not consumed
-    public fun auto_mine_harvest_bbn(
-        user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<MineInfo>,
-        bbn_obj: &Object<bbn::BBNStakeSeal>,
-        auto_miner_obj: &mut Object<AutoMiner>
-    ) {
-        let now = timestamp::now_seconds();
-        let auto_miner = object::borrow_mut(auto_miner_obj);
-        // Check if miner has expired
-        assert!(now <= auto_miner.start_time + auto_miner.duration, 1); // "Auto miner expired"
-        // Calculate rewards
-        let time_since_last_claim = now - auto_miner.last_claim;
-        let rewards = time_since_last_claim * auto_miner.mining_power;
-
-        let _harvest_amount =
-            gold_miner::mine_internal_bbn(
-                user,
-                treasury_obj,
-                miner_obj,
-                bbn_obj,
-                (rewards as u256)
-            );
-        auto_miner.last_claim = now;
-        //TODO: lack emit event
-    }
-
+  
     fun calculate_cost(miner_type: u8, duration: u64): u64 {
         let base_cost =
             if (miner_type == MANUAL_MINER) {
@@ -169,6 +123,20 @@ module gold_miner::auto_miner {
             30 // 30 clicks per second
         }
     }
+
+    public(friend) fun get_harvest_amount(miner: &mut Object<AutoMiner>): u64 {
+        let now = timestamp::now_seconds();
+        let auto_miner = object::borrow_mut(miner);
+        // Check if miner has expired
+        assert!(now <= auto_miner.start_time + auto_miner.duration, 1); // "Auto miner expired"
+        // Calculate rewards
+        let time_since_last_claim = now - auto_miner.last_claim;
+        let rewards = time_since_last_claim * auto_miner.mining_power;
+        auto_miner.last_claim = now;
+
+        rewards
+    }
+
 
     #[view]
     public fun get_miner_info(miner: &AutoMiner): (address, u8, u64, u64, u64, u64, u64) {

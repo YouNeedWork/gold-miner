@@ -8,14 +8,35 @@ module gold_miner::gold_miner {
     use moveos_std::table_vec::TableVec;
     use moveos_std::simple_map::{Self, SimpleMap};
     use moveos_std::event::emit;
-    use gold_miner::gold;
     use moveos_std::signer::address_of;
     use moveos_std::object::{Self, Object, account_named_object_id};
     use rooch_framework::account_coin_store;
+    use rooch_framework::simple_rng;
+
+    use gold_miner::auto_miner;
+    use gold_miner::gold_ore;
+    use gold_miner::silver_ore;
+    use gold_miner::copper_ore;
+    use gold_miner::iron_ore;
+    use gold_miner::refining_potion;
+    use gold_miner::stamina_potion;
+    use gold_miner::gold;
 
     use grow_bitcoin::grow_bitcoin;
 
-    friend gold_miner::auto_miner;
+
+    friend gold_miner::harvest;
+
+
+    /// constants
+    /// Equipment types
+    const EQUIPMENT_TYPE_REFINING_POTION: u8 = 1;
+    const EQUIPMENT_TYPE_STAMINA_POTION: u8 = 2;
+    const EQUIPMENT_TYPE_GOLD_ORE: u8 = 3;
+    const EQUIPMENT_TYPE_SILVER_ORE: u8 = 4;
+    const EQUIPMENT_TYPE_COPPER_ORE: u8 = 5;
+    const EQUIPMENT_TYPE_IRON_ORE: u8 = 6;
+
 
     /// The logic for gold miner Game
     struct GoldMiner has key, store {
@@ -65,6 +86,11 @@ module gold_miner::gold_miner {
         player: address,
         mined: u256,
         total_mined: u256
+    }
+
+    struct EquipmentMintEvent has copy, drop {
+        player: address,
+        equipment_type: u8
     }
 
     /// inetnal
@@ -305,7 +331,7 @@ module gold_miner::gold_miner {
         amount
     }
 
-    //TODO: auto mine haverst with bbn stake
+    // auto mine haverst with bbn stake
     // internal function
     public(friend) fun mine_internal_bbn(
         user: &signer,
@@ -351,4 +377,48 @@ module gold_miner::gold_miner {
         amount
     }
 
+
+    fun random_equipment(player: address) {
+        // Get random number from timestamp
+        let number = simple_rng::rand_u64_range(0, 10000);
+        // Calculate probabilities (in parts per 1000):
+        // Gold Ore: 0.05% = 0.5/1000
+        // Silver Ore: 0.07% = 0.75/1000  
+        // Copper Ore: 0.1% = 1/1000
+        // Iron Ore: 0.12% = 1.2/1000
+        // Refining Potion: 0.01% = 0.1/1000
+        // Stamina Potion: 0.02% = 0.2/1000
+
+        if (number < 1) {
+            //Refining Potion
+            let potion = refining_potion::mint();
+            object::transfer(potion, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_REFINING_POTION });
+        } else if (number < 3) {
+            //Stamina Potion
+            let potion = stamina_potion::mint();
+            object::transfer(potion, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_STAMINA_POTION });
+        } else if (number < 8) {
+            //Gold Ore
+            let ore = gold_ore::mint(1);
+            object::transfer(ore, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_GOLD_ORE });
+        } else if (number < 16) {
+            //Silver Ore
+            let ore = silver_ore::mint(1);
+            object::transfer(ore, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_SILVER_ORE });
+        } else if (number < 24) {
+            //Copper Ore
+            let ore = copper_ore::mint(1);
+            object::transfer(ore, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_COPPER_ORE });
+        } else if (number < 36) {
+            //Iron Ore
+            let ore = iron_ore::mint(1);
+            object::transfer(ore, player);
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_IRON_ORE });
+        }
+    }
 }
