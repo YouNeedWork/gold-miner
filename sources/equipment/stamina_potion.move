@@ -14,7 +14,7 @@ module gold_miner::stamina_potion {
     /// Event emitted when a new StaminaPotion is minted
     struct MintStaminaPotionEvent has copy, drop {}
 
-    /// Event emitted when a StaminaPotion NFT is burned  
+    /// Event emitted when a StaminaPotion NFT is burned
     struct BurnStaminaPotionEvent has copy, drop {}
 
     /// One-time witness for the module
@@ -22,16 +22,12 @@ module gold_miner::stamina_potion {
 
     /// Initialize the module
     fun init() {
-        let keys = vector[
-            utf8(b"name"),
-            utf8(b"description"),
-            utf8(b"image_url"),
-        ];
-        
+        let keys = vector[utf8(b"name"), utf8(b"description"), utf8(b"image_url")];
+
         let values = vector[
             utf8(b"Stamina Potion"),
             utf8(b"A magical potion that restores mining stamina"),
-            utf8(b""), // placeholder URL
+            utf8(b"") // placeholder URL
         ];
 
         let dis = display::display<StaminaPotion>();

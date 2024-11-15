@@ -95,7 +95,6 @@ module gold_miner::auto_miner {
         object::transfer_extend(object::new_named_object(auto_miner), address_of(user));
     }
 
-  
     fun calculate_cost(miner_type: u8, duration: u64): u64 {
         let base_cost =
             if (miner_type == MANUAL_MINER) {
@@ -136,7 +135,6 @@ module gold_miner::auto_miner {
 
         rewards
     }
-
 
     #[view]
     public fun get_miner_info(miner: &AutoMiner): (address, u8, u64, u64, u64, u64, u64) {

@@ -41,7 +41,20 @@ module gold_miner::gold {
         coin::burn(&mut treasury.coin_info, c)
     }
 
-    public fun basic_mining_amount(): u256 {
-        1 * 1_000_000
+    #[test_only]
+    public fun test_init() {
+        init();
+        /*
+        let coin_info_obj =
+            coin::register_extend<Gold>(
+                string::utf8(b"Rooch Gold Miner Game"),
+                string::utf8(b"Gold"),
+                option::none(),
+                DECIMALS
+            );
+
+        let treasury_obj = object::new_named_object(Treasury { coin_info: coin_info_obj });
+        treasury_obj
+        */
     }
 }

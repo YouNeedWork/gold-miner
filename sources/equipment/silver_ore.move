@@ -8,16 +8,14 @@ module gold_miner::silver_ore {
 
     friend gold_miner::gold_miner;
 
-
-
     /// The SilverOre NFT type
     struct SilverOre has key, store {
-        rarity: u8,  // 1-5 representing common to legendary
+        rarity: u8 // 1-5 representing common to legendary
     }
 
     /// Event emitted when a new SilverOre is minted
     struct MintSilverOreEvent has copy, drop {
-        rarity: u8,
+        rarity: u8
     }
 
     /// Event emitted when a SilverOre NFT is burned
@@ -30,16 +28,12 @@ module gold_miner::silver_ore {
 
     /// Initialize the module
     fun init() {
-        let keys = vector[
-            utf8(b"name"),
-            utf8(b"description"),
-            utf8(b"image_url"),
-        ];
-        
+        let keys = vector[utf8(b"name"), utf8(b"description"), utf8(b"image_url")];
+
         let values = vector[
             utf8(b"Silver Ore {rarity}"),
             utf8(b"A valuable ore that provides enhanced mining bonuses"),
-            utf8(b""), // placeholder URL
+            utf8(b"") // placeholder URL
         ];
 
         let dis = display::display<SilverOre>();
@@ -53,30 +47,20 @@ module gold_miner::silver_ore {
     }
 
     /// Create a new SilverOre NFT
-    public(friend) fun mint(
-        rarity: u8,
-    ): Object<SilverOre> {
+    public(friend) fun mint(rarity: u8): Object<SilverOre> {
         assert!(rarity >= 1 && rarity <= 5, 0); // Invalid rarity
-        
-        let silver_ore = SilverOre {
-            rarity,
-        };
 
-        event::emit(MintSilverOreEvent {
-            rarity,
-        });
+        let silver_ore = SilverOre { rarity };
+
+        event::emit(MintSilverOreEvent { rarity });
 
         object::new_named_object(silver_ore)
     }
 
     /// Burns a SilverOre NFT, destroying it permanently
     public(friend) fun burn(silver_ore: Object<SilverOre>) {
-        let SilverOre {
-            rarity,
-        } = object::remove(silver_ore);
+        let SilverOre { rarity } = object::remove(silver_ore);
 
-        event::emit(BurnSilverOreEvent {
-            rarity
-        });
+        event::emit(BurnSilverOreEvent { rarity });
     }
 }

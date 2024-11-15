@@ -6,17 +6,16 @@ module gold_miner::iron_ore {
     use moveos_std::object::Object;
     use moveos_std::display;
 
-
     friend gold_miner::gold_miner;
 
     /// The IronOre NFT type
     struct IronOre has key, store {
-        rarity: u8,  // 1-5 representing common to legendary
+        rarity: u8 // 1-5 representing common to legendary
     }
 
     /// Event emitted when a new IronOre is minted
     struct MintIronOreEvent has copy, drop {
-        rarity: u8,
+        rarity: u8
     }
 
     /// Event emitted when a IronOre NFT is burned
@@ -29,16 +28,12 @@ module gold_miner::iron_ore {
 
     /// Initialize the module
     fun init() {
-        let keys = vector[
-            utf8(b"name"),
-            utf8(b"description"), 
-            utf8(b"image_url"),
-        ];
-        
+        let keys = vector[utf8(b"name"), utf8(b"description"), utf8(b"image_url")];
+
         let values = vector[
             utf8(b"Iron Ore {rarity}"),
             utf8(b"A common ore that provides basic mining bonuses"),
-            utf8(b""), // placeholder URL
+            utf8(b"") // placeholder URL
         ];
 
         let dis = display::display<IronOre>();
@@ -52,30 +47,20 @@ module gold_miner::iron_ore {
     }
 
     /// Create a new IronOre NFT
-    public(friend) fun mint(
-        rarity: u8,
-    ): Object<IronOre> {
+    public(friend) fun mint(rarity: u8): Object<IronOre> {
         assert!(rarity >= 1 && rarity <= 5, 0); // Invalid rarity
-        
-        let iron_ore = IronOre {
-            rarity,
-        };
 
-        event::emit(MintIronOreEvent {
-            rarity,
-        });
+        let iron_ore = IronOre { rarity };
+
+        event::emit(MintIronOreEvent { rarity });
 
         object::new_named_object(iron_ore)
     }
 
     /// Burns a IronOre NFT, destroying it permanently
     public(friend) fun burn(iron_ore: Object<IronOre>) {
-        let IronOre {
-            rarity,
-        } = object::remove(iron_ore);
+        let IronOre { rarity } = object::remove(iron_ore);
 
-        event::emit(BurnIronOreEvent {
-            rarity
-        });
+        event::emit(BurnIronOreEvent { rarity });
     }
 }

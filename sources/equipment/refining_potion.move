@@ -14,7 +14,7 @@ module gold_miner::refining_potion {
     /// Event emitted when a new RefiningPotion is minted
     struct MintRefiningPotionEvent has copy, drop {}
 
-    /// Event emitted when a RefiningPotion NFT is burned  
+    /// Event emitted when a RefiningPotion NFT is burned
     struct BurnRefiningPotionEvent has copy, drop {}
 
     /// One-time witness for the module
@@ -22,16 +22,12 @@ module gold_miner::refining_potion {
 
     /// Initialize the module
     fun init() {
-        let keys = vector[
-            utf8(b"name"),
-            utf8(b"description"),
-            utf8(b"image_url"),
-        ];
-        
+        let keys = vector[utf8(b"name"), utf8(b"description"), utf8(b"image_url")];
+
         let values = vector[
             utf8(b"Refining Potion"),
             utf8(b"A magical potion that enhances ore refining"),
-            utf8(b""), // placeholder URL
+            utf8(b"") // placeholder URL
         ];
 
         let dis = display::display<RefiningPotion>();

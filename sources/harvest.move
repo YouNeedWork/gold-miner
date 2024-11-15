@@ -23,7 +23,12 @@ module gold_miner::harvest {
     ) {
         let harvest_amount = auto_miner::get_harvest_amount(auto_miner_obj);
         let harvest_amount =
-            gold_miner::mine_internal(user, treasury_obj, miner_obj, (harvest_amount as u256));
+            gold_miner::mine_internal(
+                user,
+                treasury_obj,
+                miner_obj,
+                (harvest_amount as u256)
+            );
 
         moveos_std::event::emit(
             HarvestEvent {
@@ -59,7 +64,7 @@ module gold_miner::harvest {
                 player: address_of(user),
                 amount: harvest_amount,
                 auto_miner: true,
-                bbn_stake: true,
+                bbn_stake: true
             }
         );
     }
