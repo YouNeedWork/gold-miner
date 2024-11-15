@@ -1,4 +1,5 @@
 module gold_miner::gold_miner {
+    use std::debug::print;
     use std::option;
     use std::u256;
     use std::u64;
@@ -51,6 +52,7 @@ module gold_miner::gold_miner {
     const EERROR_NOT_ENOUGH_ENERGY: u64 = 100006; // Not enough energy to mine
     const EERROR_NOT_AUTO_MINER: u64 = 100007; // Not auto miner
     const EERROR_IS_AUTO_MINER: u64 = 100008; // Is auto miner
+    const EERROR_NOT_STARTED: u64 = 100009; // Not started mining
 
     /// The logic for gold miner Game
     struct GoldMiner has key, store {
@@ -152,7 +154,7 @@ module gold_miner::gold_miner {
 
         //FIXME: Why this check is no working?
         assert!(
-            !account::exists_resource<Object<MineInfo>>(player_address),
+            !account::exists_resource<MineInfo>(player_address),
             EERROR_ALREADY_STARTED
         ); //alerady start
 
@@ -187,12 +189,11 @@ module gold_miner::gold_miner {
         account_coin_store::do_accept_coin<gold::Gold>(user);
         account_coin_store::deposit(address_of(user), gold_mine);
 
-        let miner_obj = object::new_named_object(miner);
-
         // Handle inviter rewards if exists
-        handle_inviter_reward(user, treasury_obj, &mut miner_obj, amount);
+        handle_inviter_reward(user, treasury_obj, &mut miner, amount);
 
-        object::transfer_extend(miner_obj, player_address);
+        account::move_resource_to(user,miner);
+        
         emit(NewPlayerEvent { invite, player: player_address, mined: amount });
     }
 
@@ -222,14 +223,14 @@ module gold_miner::gold_miner {
     }
 
     ///mine $GOLD
-    entry fun mine(
-        user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<MineInfo>
+    public entry fun mine(
+        user: &signer
     ) {
         // Get player address
         let player_address = address_of(user);
-        let gold_miner = object::borrow_mut(miner_obj);
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
+
         assert!(!gold_miner.auto_miner, EERROR_NOT_AUTO_MINER); // "not in auto miner can tap"
 
         // Calculate and update hunger
@@ -256,23 +257,25 @@ module gold_miner::gold_miner {
             multiplier = multiplier + nft_multiplier; // Additional x for staked NFT
         };
 
-        let amount = ((base_amount * multiplier / 10000) as u256);
-        let miner = object::borrow_mut(miner_obj);
-        miner.mined = miner.mined + amount;
+        let amount = u256::multiple_and_divide(base_amount,multiplier, BPS);
+        gold_miner.mined = gold_miner.mined + amount;
+        let total_mined = gold_miner.mined;
 
+        // mint gold
+        let treasury_obj_id = object::named_object_id<gold::Treasury>();
+        let treasury_obj = borrow_mut_object_shared<gold::Treasury>(treasury_obj_id);
         let treasury = object::borrow_mut(treasury_obj);
         let gold_mine = gold::mint(treasury, amount);
         account_coin_store::deposit(address_of(user), gold_mine);
 
         emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined: miner.mined }
+            MineEvent { player: address_of(user), mined: amount, total_mined}
         );
     }
 
     ///mine $GOLD
     entry fun mine_bbn(
         user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
         miner_obj: &mut Object<MineInfo>,
         bbn_obj: &Object<bbn::BBNStakeSeal>
     ) {
@@ -310,6 +313,8 @@ module gold_miner::gold_miner {
         let miner = object::borrow_mut(miner_obj);
         miner.mined = miner.mined + amount;
 
+        let treasury_obj_id = object::named_object_id<gold::Treasury>();
+        let treasury_obj = borrow_mut_object_shared<gold::Treasury>(treasury_obj_id);
         let treasury = object::borrow_mut(treasury_obj);
         let gold_mine = gold::mint(treasury, amount);
         account_coin_store::deposit(address_of(user), gold_mine);
@@ -423,10 +428,9 @@ module gold_miner::gold_miner {
     fun handle_inviter_reward(
         user: &signer,
         treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<MineInfo>,
+        miner: &mut MineInfo,
         amount: u256
     ) {
-        let miner = object::borrow(miner_obj);
         if (option::is_none(&miner.inviter)) { return };
 
         // Get GoldMiner object to access invite_reward_rate
@@ -537,7 +541,6 @@ module gold_miner::gold_miner {
         miner.auto_miner
     }
 
-
     #[view]
     public fun get_total_tap(): u256 {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
@@ -596,15 +599,5 @@ module gold_miner::gold_miner {
     #[test_only]
     public fun test_init() {
         init();
-        /*
-        object::new_named_object(GoldMiner {
-            invite_info: simple_map::new(),
-            invite_reward: simple_map::new(),
-            total_tap: 0,
-            total_mined: 0,
-            basic_mining_amount: 1_000_000,
-            invite_reward_rate: 1500
-        })
-        */
     }
 }

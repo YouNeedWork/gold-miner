@@ -25,7 +25,7 @@ module gold_miner::gold {
             coin::register_extend<Gold>(
                 string::utf8(b"Rooch Gold Miner Game"),
                 string::utf8(b"Gold"),
-                option::none(),
+                option::none(),//TODO: add icon
                 DECIMALS
             );
 
@@ -44,17 +44,5 @@ module gold_miner::gold {
     #[test_only]
     public fun test_init() {
         init();
-        /*
-        let coin_info_obj =
-            coin::register_extend<Gold>(
-                string::utf8(b"Rooch Gold Miner Game"),
-                string::utf8(b"Gold"),
-                option::none(),
-                DECIMALS
-            );
-
-        let treasury_obj = object::new_named_object(Treasury { coin_info: coin_info_obj });
-        treasury_obj
-        */
     }
 }
