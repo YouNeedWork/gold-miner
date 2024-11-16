@@ -31,8 +31,14 @@ module gold_miner::boost_nft {
         owner: address
     }
 
+
+    public entry fun mint_3x_boost_nft(account: &signer, duration: u64) {
+        let nft_obj = mint_3x_boost(account, duration);
+        object::transfer(nft_obj, signer::address_of(account));
+    }
+
     // Create a 3x boost NFT with specified duration
-    public fun mint_3x_boost(account: &signer, duration: u64) {
+    public fun mint_3x_boost(account: &signer, duration: u64):Object<BoostNFT> {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
 
         let nft = BoostNFT {
@@ -42,8 +48,7 @@ module gold_miner::boost_nft {
             active: false
         };
 
-        let nft_obj = object::new(nft);
-        object::transfer(nft_obj, signer::address_of(account));
+        object::new_named_object(nft)
     }
 
     // Create an OG 2x boost NFT (permanent)
@@ -131,5 +136,21 @@ module gold_miner::boost_nft {
             object::remove(obj);
 
         //TODO: lack event emit
+    }
+
+
+    #[test_only]
+    public fun test_init_3x(user: &signer): Object<BoostNFT> {
+        mint_3x_boost(user, SEVEN_DAYS)
+    }
+
+    #[test_only]
+    public fun test_init_og_2x(user: &signer) {
+        mint_og_boost(user);
+    }
+
+    #[test_only]
+    public fun test_init_early_1_7x(user: &signer) {
+        mint_early_boost(user);
     }
 }

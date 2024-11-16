@@ -4,6 +4,7 @@ module gold_miner::gold_miner {
     use std::u256;
     use std::u64;
     use std::vector;
+    use moveos_std::table;
     use moveos_std::account;
     use bitcoin_move::bbn;
     use gold_miner::boost_nft;
@@ -150,9 +151,7 @@ module gold_miner::gold_miner {
     public entry fun start(user: &signer, invite: address) {
         let player_address = address_of(user);
         assert!(player_address != invite, EERROR_SELF_INVITE); //"You can't invite yourself");
-        //Check if user already has a miner object
-
-        //FIXME: Why this check is no working?
+        // Check if user already has a miner object
         assert!(
             !account::exists_resource<MineInfo>(player_address),
             EERROR_ALREADY_STARTED
@@ -197,32 +196,22 @@ module gold_miner::gold_miner {
         emit(NewPlayerEvent { invite, player: player_address, mined: amount });
     }
 
-    /// Calculate and update hunger (energy) for mining
-    /// Returns the updated hunger value
-    fun calculate_and_update_hunger(gold_miner: &mut MineInfo): u64 {
-        let now = timestamp::now_seconds();
 
-        // Calculate energy regeneration
-        let time_passed = now - gold_miner.last_update;
-        let hunger =
-            if (gold_miner.hunger >= 1000) {
-                gold_miner.hunger // Already at max
-            } else {
-                // Add 1 energy per second up to max
-                u64::min(gold_miner.hunger + time_passed, 1000)
-            };
 
-        // Require at least 1 energy to mine
-        assert!(hunger >= 1, EERROR_NOT_ENOUGH_ENERGY); // "Not enough energy to mine"
+    /*
+    public entry fun boost_with_nft(
+        user: &signer,
+        nft_obj: Object<boost_nft::BoostNFT>
+    ) {
+        let player_address = address_of(user);
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
+        //boost_nft::activate_boost(nft_obj, player_address);
 
-        // Update miner object
-        gold_miner.hunger = hunger - 1;
-        gold_miner.last_update = now;
-
-        hunger
+        //gold_miner.boost_nft = option::some(nft_obj);
     }
+    */
 
-    ///mine $GOLD
     public entry fun mine(
         user: &signer
     ) {
@@ -268,59 +257,11 @@ module gold_miner::gold_miner {
         let gold_mine = gold::mint(treasury, amount);
         account_coin_store::deposit(address_of(user), gold_mine);
 
+        // Handle inviter rewards if exists
+        handle_inviter_reward(user, treasury_obj, gold_miner, amount);
+
         emit(
             MineEvent { player: address_of(user), mined: amount, total_mined}
-        );
-    }
-
-    ///mine $GOLD
-    entry fun mine_bbn(
-        user: &signer,
-        miner_obj: &mut Object<MineInfo>,
-        bbn_obj: &Object<bbn::BBNStakeSeal>
-    ) {
-        // Get player address
-        // let player_address = address_of(user);
-
-        let gold_miner = object::borrow_mut(miner_obj);
-        assert!(!gold_miner.auto_miner, EERROR_NOT_AUTO_MINER); // "not in auto miner can tap"
-        let bbn = object::borrow(bbn_obj);
-        assert!(bbn::is_expired(bbn), EERROR_BBN_EXPIRED); // "BBN stake expired"
-
-        // Calculate and update hunger
-        let _hunger = calculate_and_update_hunger(gold_miner);
-
-        // Calculate base amount
-        let gold_miner_obj_id = object::named_object_id<GoldMiner>();
-        let gold_miner_obj = borrow_mut_object_shared<GoldMiner>(gold_miner_obj_id);
-        let gold_miner_state = object::borrow(gold_miner_obj);
-        let base_amount = gold_miner_state.basic_mining_amount;
-
-        // Calculate multiplier based on staking status
-        let multiplier = 10000;
-
-        // handle btc stake
-        multiplier = multiplier + 20000;
-
-        // handle NFT stake
-        if (option::is_some(&gold_miner.boost_nft)) {
-            let nft_multiplier =
-                boost_nft::get_multiplier(option::borrow_mut(&mut gold_miner.boost_nft));
-            multiplier = multiplier + nft_multiplier; // Additional x for staked NFT
-        };
-
-        let amount = ((base_amount * multiplier / 10000) as u256);
-        let miner = object::borrow_mut(miner_obj);
-        miner.mined = miner.mined + amount;
-
-        let treasury_obj_id = object::named_object_id<gold::Treasury>();
-        let treasury_obj = borrow_mut_object_shared<gold::Treasury>(treasury_obj_id);
-        let treasury = object::borrow_mut(treasury_obj);
-        let gold_mine = gold::mint(treasury, amount);
-        account_coin_store::deposit(address_of(user), gold_mine);
-
-        emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined: miner.mined }
         );
     }
 
@@ -359,67 +300,20 @@ module gold_miner::gold_miner {
             multiplier = multiplier + nft_multiplier;
         };
 
-        let amount = base_amount * ((multiplier as u256) / 10000);
-        let miner = object::borrow_mut(miner_obj);
-        miner.mined = miner.mined + amount;
+        let amount = u256::multiple_and_divide(base_amount,multiplier, BPS);
+        gold_miner.mined = gold_miner.mined + amount;
+        let total_mined = gold_miner.mined;
+
 
         let treasury = object::borrow_mut(treasury_obj);
         let gold_mine = gold::mint(treasury, amount);
         account_coin_store::deposit(address_of(user), gold_mine);
 
-        emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined: miner.mined }
-        );
-
-        amount
-    }
-
-    // auto mine haverst with bbn stake
-    // internal function
-    public(friend) fun mine_internal_bbn(
-        user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<MineInfo>,
-        bbn_obj: &Object<bbn::BBNStakeSeal>,
-        base_amount: u256
-    ): u256 {
-        let gold_miner = object::borrow_mut(miner_obj);
-        assert!(gold_miner.auto_miner, 3); // "Not auto miner"
-
-        let bbn = object::borrow(bbn_obj);
-        assert!(bbn::is_expired(bbn), EERROR_BBN_EXPIRED); // "BBN stake expired"
-
-        // Get GoldMiner object to access basic_mining_amount
-        let gold_miner_obj_id = object::named_object_id<GoldMiner>();
-        let gold_miner_obj = borrow_mut_object_shared<GoldMiner>(gold_miner_obj_id);
-        let gold_miner_state = object::borrow(gold_miner_obj);
-
-        // Calculate base amount by rewrite with decimal
-        let base_amount = base_amount * gold_miner_state.basic_mining_amount;
-
-        // Calculate multiplier based on staking status
-        let multiplier = 10000; // Base 1x multiplier
-
-        // handle btc stake
-        multiplier = multiplier + 20000;
-
-        // handle NFT stake
-        if (option::is_some(&gold_miner.boost_nft)) {
-            let nft_multiplier =
-                boost_nft::get_multiplier(option::borrow_mut(&mut gold_miner.boost_nft));
-            multiplier = multiplier + nft_multiplier;
-        };
-
-        let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
-        let miner = object::borrow_mut(miner_obj);
-        miner.mined = miner.mined + amount;
-
-        let treasury = object::borrow_mut(treasury_obj);
-        let gold_mine = gold::mint(treasury, amount);
-        account_coin_store::deposit(address_of(user), gold_mine);
+        // Handle inviter rewards if exists
+        handle_inviter_reward(user, treasury_obj, gold_miner, amount);
 
         emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined: miner.mined }
+            MineEvent { player: address_of(user), mined: amount, total_mined }
         );
 
         amount
@@ -450,6 +344,31 @@ module gold_miner::gold_miner {
         emit(
             InviterRewardEvent { player: address_of(user), inviter, amount: reward_amount }
         );
+    }
+
+    /// Calculate and update hunger (energy) for mining
+    /// Returns the updated hunger value
+    fun calculate_and_update_hunger(gold_miner: &mut MineInfo): u64 {
+        let now = timestamp::now_seconds();
+
+        // Calculate energy regeneration
+        let time_passed = now - gold_miner.last_update;
+        let hunger =
+            if (gold_miner.hunger >= 1000) {
+                gold_miner.hunger // Already at max
+            } else {
+                // Add 1 energy per second up to max
+                u64::min(gold_miner.hunger + time_passed, 1000)
+            };
+
+        // Require at least 1 energy to mine
+        assert!(hunger >= 1, EERROR_NOT_ENOUGH_ENERGY); // "Not enough energy to mine"
+
+        // Update miner object
+        gold_miner.hunger = hunger - 1;
+        gold_miner.last_update = now;
+
+        hunger
     }
 
     fun random_equipment(player: address) {

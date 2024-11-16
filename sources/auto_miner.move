@@ -1,8 +1,5 @@
 module gold_miner::auto_miner {
     use std::signer::address_of;
-    use bitcoin_move::bbn;
-    use gold_miner::gold_miner;
-    use gold_miner::gold_miner::MineInfo;
     use gold_miner::gold::Gold;
     use moveos_std::object::{Object};
     use moveos_std::object;
