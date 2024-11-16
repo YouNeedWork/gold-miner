@@ -5,6 +5,8 @@ module gold_miner::boost_nft {
     use moveos_std::event;
     use moveos_std::object::{Self, Object, ObjectID};
 
+    friend gold_miner::gold_miner;
+
     // Error codes
     const EBoostAlreadyActive: u64 = 0;
     const EBoostExpired: u64 = 1;
@@ -19,8 +21,7 @@ module gold_miner::boost_nft {
     const SEVEN_DAYS: u64 = 7 * 24 * 60 * 60;
     const THIRTY_DAYS: u64 = 30 * 24 * 60 * 60;
 
-    struct BoostNFT has key, store {
-        owner: address,
+    struct BoostNFT has key, store,drop {
         multiplier: u64,
         expiry: u64, // Timestamp in seconds, 0 for permanent boosts
         active: bool
@@ -42,7 +43,6 @@ module gold_miner::boost_nft {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
 
         let nft = BoostNFT {
-            owner: signer::address_of(account),
             multiplier: BOOST_3X,
             expiry: timestamp::now_seconds() + duration,
             active: false
@@ -54,7 +54,6 @@ module gold_miner::boost_nft {
     // Create an OG 2x boost NFT (permanent)
     public fun mint_og_boost(account: &signer) {
         let nft = BoostNFT {
-            owner: signer::address_of(account),
             multiplier: BOOST_2X,
             expiry: 0,
             active: false
@@ -66,7 +65,6 @@ module gold_miner::boost_nft {
     // Create an early participant 1.7x boost NFT (permanent)
     public fun mint_early_boost(account: &signer) {
         let nft = BoostNFT {
-            owner: signer::address_of(account),
             multiplier: BOOST_1_7X,
             expiry: 0,
             active: false
@@ -80,9 +78,6 @@ module gold_miner::boost_nft {
         account: &signer, nft_obj: &mut Object<BoostNFT>
     ) {
         let nft = object::borrow_mut(nft_obj);
-
-        // Verify ownership
-        assert!(nft.owner == signer::address_of(account), ENotAuthorized);
 
         // Check if boost is not expired for time-limited boosts
         if (nft.expiry != 0) {
@@ -100,40 +95,44 @@ module gold_miner::boost_nft {
         );
     }
 
+    public(friend) fun take_object_by_id(user :&signer,nft_obj: ObjectID): Object<BoostNFT> {
+        object::take_object<BoostNFT>(user,nft_obj)
+    }
+
+    public(friend) fun remove_object(nft_obj:Object<BoostNFT>):BoostNFT {
+        object::remove<BoostNFT>(nft_obj)
+    }
+
+    public(friend) fun new_object(nft_obj:BoostNFT):Object<BoostNFT> {
+        object::new_named_object<BoostNFT>(nft_obj)
+    }
+
     // Deactivate a boost NFT
     public fun deactivate_boost(
-        account: &signer, nft_obj: &mut Object<BoostNFT>
+        account: &signer, nft: &mut BoostNFT
     ) {
-        let nft = object::borrow_mut(nft_obj);
-        assert!(nft.owner == signer::address_of(account), ENotAuthorized);
         nft.active = false;
     }
 
     // Get the current multiplier of a boost NFT
-    public fun get_multiplier(nft_obj: &Object<BoostNFT>): u256 {
-        let nft = object::borrow(nft_obj);
+    public fun get_multiplier(nft: &BoostNFT): u256 {
         (nft.multiplier as u256)
     }
 
     // Check if a boost NFT is active
-    public fun is_active(nft_obj: &Object<BoostNFT>): bool {
-        let nft = object::borrow(nft_obj);
+    public fun is_active(nft: &BoostNFT): bool {
         nft.active
     }
 
     // Check if a boost NFT has expired
-    public fun is_expired(nft_obj: &Object<BoostNFT>): bool {
-        let nft = object::borrow<BoostNFT>(nft_obj);
+    public fun is_expired(nft: &BoostNFT): bool {
         nft.expiry != 0 && timestamp::now_seconds() >= nft.expiry
     }
 
     // burn a boost NFT
-    public fun burn_boost(account: &signer, obj_id: ObjectID) {
-        let obj = object::take_object<BoostNFT>(account, obj_id);
-        //assert!(is_expired(&obj), EBoostExpired);
+    public fun burn_boost(account: &signer, nft: BoostNFT) {
 
-        let BoostNFT { owner: _, multiplier: _, expiry: _, active: _ } =
-            object::remove(obj);
+        let BoostNFT { multiplier: _, expiry: _, active: _ } = nft;
 
         //TODO: lack event emit
     }

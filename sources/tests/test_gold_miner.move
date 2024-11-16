@@ -1,8 +1,10 @@
 #[test_only]
 module gold_miner::test_gold_miner {
+    use std::debug::print;
     use std::option;
     use std::signer;
     use std::signer::address_of;
+    use gold_miner::boost_nft::BoostNFT;
     use gold_miner::boost_nft;
     use grow_bitcoin::grow_bitcoin;
     use moveos_std::timestamp;
@@ -138,13 +140,54 @@ module gold_miner::test_gold_miner {
     fun test_mine_with_nft_boost(user: &signer) {
         test_init(user);
         let boost_3x = boost_nft::test_init_3x(user);
-        //gold_miner::get_boost_nft(user, boost_3x);
 
+        gold_miner::boost_with_nft(user, boost_3x);
         gold_miner::mine(user);
-        // With NFT boost multiplier (2x), amount should be 2 * basic_mining_amount
-        //assert!(account_coin_store::balance<gold::Gold>(@0x42) == 2 * 1_000_000, 1);
 
-        object::transfer(boost_3x, address_of(user));
+        assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
+        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
+    }
+
+    #[test(user = @0x42)]
+    fun test_mine_with_nft_boost_and_remove_boost(user: &signer) {
+        test_init(user);
+        let boost_3x = boost_nft::test_init_3x(user);
+
+        let object_id = object::id(&boost_3x);
+        gold_miner::boost_with_nft(user, boost_3x);
+        gold_miner::mine(user);
+
+        assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
+        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
+
+        gold_miner::remove_boost_nft(user);
+        gold_miner::mine(user);
+
+        assert!(account_coin_store::balance<gold::Gold>(@0x42) == 105 * 1_000_000, 1);
+        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000 , 1);
+        assert!(object::exists_object_with_type<BoostNFT>(object_id),1);
+    }
+
+    #[test(user = @0x42)]
+    fun test_mine_with_nft_boost_and_boost_end(user: &signer) {
+        test_init(user);
+        let boost_3x = boost_nft::test_init_3x(user);
+
+        let object_id = object::id(&boost_3x);
+        gold_miner::boost_with_nft(user, boost_3x);
+        gold_miner::mine(user);
+
+        assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
+        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
+        assert!(!object::exists_object_with_type<BoostNFT>(object_id),1);
+
+        timestamp::fast_forward_seconds_for_test(7 * 24 * 60 * 60 +1);
+        gold_miner::mine(user);
+        gold_miner::remove_boost_nft(user);
+
+        assert!(account_coin_store::balance<gold::Gold>(@0x42) == 105 * 1_000_000, 1);
+        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000 , 1);
+        assert!(!object::exists_object_with_type<BoostNFT>(object_id),1);
     }
 
     /*

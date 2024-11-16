@@ -4,6 +4,7 @@ module gold_miner::gold_miner {
     use std::u256;
     use std::u64;
     use std::vector;
+    use gold_miner::boost_nft::BoostNFT;
     use moveos_std::table;
     use moveos_std::account;
     use bitcoin_move::bbn;
@@ -83,7 +84,7 @@ module gold_miner::gold_miner {
         last_update: u64,
 
         /// Boost NFT in here
-        boost_nft: option::Option<Object<boost_nft::BoostNFT>>,
+        boost_nft: option::Option<boost_nft::BoostNFT>,
 
         /// inviter
         inviter: option::Option<address>,
@@ -197,20 +198,35 @@ module gold_miner::gold_miner {
     }
 
 
-
-    /*
     public entry fun boost_with_nft(
         user: &signer,
-        nft_obj: Object<boost_nft::BoostNFT>
+        nft_obj: Object<BoostNFT>
     ) {
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
         let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
-        //boost_nft::activate_boost(nft_obj, player_address);
-
-        //gold_miner.boost_nft = option::some(nft_obj);
+        boost_nft::activate_boost(user,&mut nft_obj);
+        let nft = boost_nft::remove_object(nft_obj);
+        gold_miner.boost_nft = option::some(nft);
     }
-    */
+
+    public entry fun remove_boost_nft(
+        user: &signer
+    ) {
+        let player_address = address_of(user);
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
+        assert!(option::is_some(&gold_miner.boost_nft), 1); // "No boost NFT to remove"
+        let nft_obj = option::extract(&mut gold_miner.boost_nft);
+        assert!(boost_nft::is_active(&nft_obj), 1); // "Boost NFT is not active"
+        if (boost_nft::is_expired(&nft_obj)) {
+            boost_nft::deactivate_boost(user, &mut nft_obj);
+            boost_nft::burn_boost(user, nft_obj);
+        } else {
+            boost_nft::deactivate_boost(user, &mut nft_obj);
+            object::transfer(boost_nft::new_object(nft_obj), player_address);
+        }
+    }
 
     public entry fun mine(
         user: &signer
@@ -240,9 +256,9 @@ module gold_miner::gold_miner {
         };
 
         // handle NFT stake
-        if (option::is_some(&gold_miner.boost_nft)) {
+        if (option::is_some(&gold_miner.boost_nft) && boost_nft::is_active(option::borrow(&gold_miner.boost_nft)) && !boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
             let nft_multiplier =
-                boost_nft::get_multiplier(option::borrow_mut(&mut gold_miner.boost_nft));
+                boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
             multiplier = multiplier + nft_multiplier; // Additional x for staked NFT
         };
 
@@ -442,11 +458,6 @@ module gold_miner::gold_miner {
         miner.last_update
     }
 
-    #[view]
-    public fun get_boost_nft(miner_obj: &Object<MineInfo>): &option::Option<Object<boost_nft::BoostNFT>> {
-        let miner = object::borrow(miner_obj);
-        &miner.boost_nft
-    }
 
     #[view]
     public fun get_inviter(miner_obj: &Object<MineInfo>): &option::Option<address> {
