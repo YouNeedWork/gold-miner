@@ -22,7 +22,7 @@ module gold_miner::test_gold_miner {
     use moveos_std::simple_map::{Self, SimpleMap};
 
     #[only_test]
-    fun test_init(user:&signer) {
+    fun test_init(user: &signer) {
         rooch_framework::genesis::init_for_test();
         gold_miner::test_init();
         gold::test_init();
@@ -63,7 +63,10 @@ module gold_miner::test_gold_miner {
         test_init(user);
         gold_miner::mine(user);
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 101 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 150_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 150_000,
+            1
+        );
     }
 
     #[test(user = @0x42)]
@@ -98,7 +101,7 @@ module gold_miner::test_gold_miner {
             i = i + 1;
         };
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 1100 * 1_000_000, 1);
-        timestamp::fast_forward_seconds_for_test(60*120);
+        timestamp::fast_forward_seconds_for_test(60 * 120);
 
         let i = 0;
         while (i < 120) {
@@ -119,11 +122,10 @@ module gold_miner::test_gold_miner {
             i = i + 1;
         };
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 1100 * 1_000_000, 1);
-        timestamp::fast_forward_seconds_for_test(60*120);
+        timestamp::fast_forward_seconds_for_test(60 * 120);
 
         let i = 0;
         while (i < 120) {
-
             gold_miner::mine(user);
             i = i + 1;
         };
@@ -153,7 +155,10 @@ module gold_miner::test_gold_miner {
         gold_miner::mine(user);
 
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000,
+            1
+        );
     }
 
     #[test(user = @0x42)]
@@ -179,14 +184,20 @@ module gold_miner::test_gold_miner {
         gold_miner::mine(user);
 
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000,
+            1
+        );
 
         gold_miner::remove_boost_nft(user);
         gold_miner::mine(user);
 
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 105 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000 , 1);
-        assert!(object::exists_object_with_type<BoostNFT>(object_id),1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000,
+            1
+        );
+        assert!(object::exists_object_with_type<BoostNFT>(object_id), 1);
     }
 
     #[test(user = @0x42)]
@@ -199,16 +210,22 @@ module gold_miner::test_gold_miner {
         gold_miner::mine(user);
 
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 104 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000 , 1);
-        assert!(!object::exists_object_with_type<BoostNFT>(object_id),1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 600000,
+            1
+        );
+        assert!(!object::exists_object_with_type<BoostNFT>(object_id), 1);
 
-        timestamp::fast_forward_seconds_for_test(7 * 24 * 60 * 60 +1);
+        timestamp::fast_forward_seconds_for_test(7 * 24 * 60 * 60 + 1);
         gold_miner::mine(user);
         gold_miner::remove_boost_nft(user);
 
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 105 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000 , 1);
-        assert!(!object::exists_object_with_type<BoostNFT>(object_id),1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000 + 750000,
+            1
+        );
+        assert!(!object::exists_object_with_type<BoostNFT>(object_id), 1);
     }
 
     #[test(user = @0x42)]
@@ -220,7 +237,11 @@ module gold_miner::test_gold_miner {
         gold_miner::boost_with_nft(user, boost_3x);
         gold_miner::mine(user);
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 106 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == (106 * 1_000_000) * 15 / 100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == (106 * 1_000_000) * 15 / 100,
+            1
+        );
     }
 
     #[test(user = @gold_miner)]
@@ -231,27 +252,50 @@ module gold_miner::test_gold_miner {
         gold_miner::purchase_miner(user, 1, 3 * 24 * 60 * 60);
         //nothing to do because the times not reach
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
-        timestamp::fast_forward_seconds_for_test(60 * 60);// 1 hour passed: 60min * 3click/min =180 reward
+        timestamp::fast_forward_seconds_for_test(60 * 60); // 1 hour passed: 60min * 3click/min =180 reward
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 280 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 280 * 1_000_000 * 15 / 100,
+            1
+        );
 
-        timestamp::fast_forward_seconds_for_test(23*60 * 60);// one day passed: 1440min * 3click/min = 4320 reward
+        timestamp::fast_forward_seconds_for_test(23 * 60 * 60); // one day passed: 1440min * 3click/min = 4320 reward
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 4420 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 4420 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 4420 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 4420 * 1_000_000 * 15 / 100,
+            1
+        );
 
-        timestamp::fast_forward_seconds_for_test(6 * 24 * 60 * 60 + 60);//reach the time to end
+        timestamp::fast_forward_seconds_for_test(6 * 24 * 60 * 60 + 60); //reach the time to end
         gold_miner::auto_mine(user);
 
         // this only 3 days total, if the time in the 4th day, the reward will not increase
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 13060 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 13060 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 13060 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 13060 * 1_000_000 * 15 / 100,
+            1
+        );
     }
-
 
     #[test(user = @gold_miner)]
     fun test_mine_with_auto_miner_7_days(user: &signer) {
@@ -259,23 +303,40 @@ module gold_miner::test_gold_miner {
         gold::test_mint(user, 60_000 * 1_000_000); // 2x cost for 7 days
 
         gold_miner::purchase_miner(user, 1, 7 * 24 * 60 * 60);
-        
+
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 280 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 280 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 7 days
         timestamp::fast_forward_seconds_for_test(7 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 30340 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 30340 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 30340 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 30340 * 1_000_000 * 15 / 100,
+            1
+        );
     }
 
     #[test(user = @gold_miner)]
@@ -284,23 +345,40 @@ module gold_miner::test_gold_miner {
         gold::test_mint(user, 150_000 * 1_000_000); // 5x cost for 21 days
 
         gold_miner::purchase_miner(user, 1, 21 * 24 * 60 * 60);
-        
+
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 280 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 280 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 21 days
         timestamp::fast_forward_seconds_for_test(21 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 90820 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 90820 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 90820 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 90820 * 1_000_000 * 15 / 100,
+            1
+        );
     }
 
     #[test(user = @gold_miner)]
@@ -330,25 +408,41 @@ module gold_miner::test_gold_miner {
 
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 280 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 280 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 280 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 21 days
         timestamp::fast_forward_seconds_for_test(21 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 90820 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 90820 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 90820 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 90820 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After expiry (22 days)
         gold_miner::auto_mine(user);
     }
-
 
     #[test(user = @gold_miner)]
     #[expected_failure(abort_code = 100007)]
@@ -359,20 +453,37 @@ module gold_miner::test_gold_miner {
 
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 400 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 400 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 400 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 400 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 21 days
         timestamp::fast_forward_seconds_for_test(21 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 151300 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 151300 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 151300 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 151300 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After expiry (22 days)
         gold_miner::auto_mine(user);
@@ -387,20 +498,37 @@ module gold_miner::test_gold_miner {
 
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 700 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 700 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 700 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 700 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 21 days
         timestamp::fast_forward_seconds_for_test(21 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 302500 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 302500 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 302500 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 302500 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After expiry (22 days)
         gold_miner::auto_mine(user);
@@ -414,26 +542,42 @@ module gold_miner::test_gold_miner {
 
         // Initial balance check
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 100 * 1_000_000,
+            1
+        );
         assert!(account_coin_store::balance<gold::Gold>(@0x41) == 15 * 1_000_000, 1);
 
         // After 1 hour
         timestamp::fast_forward_seconds_for_test(60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 400 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 400 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 400 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 400 * 1_000_000 * 15 / 100,
+            1
+        );
 
         // After 21 days
         timestamp::fast_forward_seconds_for_test(21 * 24 * 60 * 60);
         gold_miner::auto_mine(user);
-        assert!(account_coin_store::balance<gold::Gold>(@gold_miner) == 151300 * 1_000_000, 1);
-        assert!(account_coin_store::balance<gold::Gold>(@0x41) == 151300 * 1_000_000 * 15/100, 1);
+        assert!(
+            account_coin_store::balance<gold::Gold>(@gold_miner) == 151300 * 1_000_000,
+            1
+        );
+        assert!(
+            account_coin_store::balance<gold::Gold>(@0x41)
+                == 151300 * 1_000_000 * 15 / 100,
+            1
+        );
     }
-
 
     //eat hambuger
     #[test(user = @gold_miner)]
-    fun test_eat_hambuger(user:&signer) {
+    fun test_eat_hambuger(user: &signer) {
         test_init(user);
 
         let i = 0;
@@ -443,19 +587,18 @@ module gold_miner::test_gold_miner {
         };
 
         let hambuger = hambuger::test_mint(user);
-        gold_miner::eat_hambuger(user,hambuger);
+        gold_miner::eat_hambuger(user, hambuger);
     }
-
 
     #[test(user = @0x42)]
     fun test_random_equipment(user: &signer) {
         test_init(user);
-        
+
         let i = 0;
         while (i < 10000) {
             gold_miner::mine(user);
             let hungry = gold_miner::get_hunger_through_times(&address_of(user));
-            if (hungry <=600) {
+            if (hungry <= 600) {
                 gold_miner::eat_hambuger(user, hambuger::test_mint(user));
             };
 
@@ -469,5 +612,4 @@ module gold_miner::test_gold_miner {
         //let gold_ore_count = object::account_named_object_id<gold_ore::GoldOre>(@0x42);
         //assert!(object::exists_object_with_type<gold_ore::GoldOre>(gold_ore_count), 1);
     }
-
 }

@@ -28,7 +28,7 @@ module gold_miner::gold {
             coin::register_extend<Gold>(
                 string::utf8(b"Rooch Gold Miner Game"),
                 string::utf8(b"Gold"),
-                option::none(),//TODO: add icon
+                option::none(), //TODO: add icon
                 DECIMALS
             );
 
@@ -44,7 +44,7 @@ module gold_miner::gold {
         coin::burn(&mut treasury.coin_info, c)
     }
 
-    public(friend) fun get_treasury():&mut Object<Treasury> {
+    public(friend) fun get_treasury(): &mut Object<Treasury> {
         let object_id = object::named_object_id<Treasury>();
         object::borrow_mut_object_shared<Treasury>(object_id)
     }

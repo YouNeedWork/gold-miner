@@ -1,9 +1,7 @@
 module gold_miner::gold_miner {
-    use std::debug::print;
     use std::option;
     use std::u256;
     use std::u64;
-    use gold_miner::hambuger;
     use gold_miner::hambuger::Hambuger;
     use gold_miner::boost_nft::BoostNFT;
     use moveos_std::account;
@@ -14,11 +12,7 @@ module gold_miner::gold_miner {
     use moveos_std::simple_map::{Self, SimpleMap};
     use moveos_std::event::emit;
     use moveos_std::signer::address_of;
-    use moveos_std::object::{
-        Self,
-        Object,
-        borrow_mut_object_shared
-    };
+    use moveos_std::object::{Self, Object, borrow_mut_object_shared};
     use rooch_framework::account_coin_store;
     use rooch_framework::simple_rng;
 
@@ -27,6 +21,7 @@ module gold_miner::gold_miner {
     use gold_miner::copper_ore;
     use gold_miner::iron_ore;
     use gold_miner::refining_potion;
+    use gold_miner::hambuger;
     use gold_miner::gold;
     use gold_miner::auto_miner;
 
@@ -90,7 +85,7 @@ module gold_miner::gold_miner {
         inviter: option::Option<address>,
 
         /// auto miner
-        auto_miner: option::Option<auto_miner::AutoMiner>,
+        auto_miner: option::Option<auto_miner::AutoMiner>
     }
 
     //events
@@ -130,7 +125,6 @@ module gold_miner::gold_miner {
         };
         object::to_shared(object::new_named_object(gold_miner))
     }
-
 
     //entry
     public entry fun start(user: &signer, invite: address) {
@@ -179,16 +173,13 @@ module gold_miner::gold_miner {
         // Handle inviter rewards if exists
         handle_inviter_reward(user, treasury_obj, &mut miner, amount);
 
-        account::move_resource_to(user,miner);
-        
+        account::move_resource_to(user, miner);
+
         emit(NewPlayerEvent { invite, player: player_address, mined: amount });
     }
 
-
     public entry fun purchase_miner(
-        user: &signer,
-        miner_type: u8,
-        duration:u64
+        user: &signer, miner_type: u8, duration: u64
     ) {
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -200,10 +191,8 @@ module gold_miner::gold_miner {
         //TODO: lack for event
     }
 
-
     public entry fun boost_with_nft(
-        user: &signer,
-        nft_obj: Object<BoostNFT>
+        user: &signer, nft_obj: Object<BoostNFT>
     ) {
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -211,14 +200,12 @@ module gold_miner::gold_miner {
         // check if already have boost nft
         assert!(option::is_none(&gold_miner.boost_nft), EERROR_ALREADY_BOOSTED); // "Already have boost NFT"
 
-        boost_nft::activate_boost(user,&mut nft_obj);
+        boost_nft::activate_boost(user, &mut nft_obj);
         let nft = boost_nft::remove_object(nft_obj);
         gold_miner.boost_nft = option::some(nft);
     }
 
-    public entry fun remove_boost_nft(
-        user: &signer
-    ) {
+    public entry fun remove_boost_nft(user: &signer) {
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
         let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
@@ -234,9 +221,7 @@ module gold_miner::gold_miner {
         }
     }
 
-    public entry fun mine(
-        user: &signer
-    ) {
+    public entry fun mine(user: &signer) {
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -261,13 +246,15 @@ module gold_miner::gold_miner {
         };
 
         // handle NFT stake
-        if (option::is_some(&gold_miner.boost_nft) && boost_nft::is_active(option::borrow(&gold_miner.boost_nft)) && !boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
+        if (option::is_some(&gold_miner.boost_nft)
+            && boost_nft::is_active(option::borrow(&gold_miner.boost_nft))
+            && !boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
             let nft_multiplier =
                 boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
             multiplier = multiplier + nft_multiplier; // Additional x for staked NFT
         };
 
-        let amount = u256::multiple_and_divide(base_amount,multiplier, BPS);
+        let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
         gold_miner.mined = gold_miner.mined + amount;
         let total_mined = gold_miner.mined;
 
@@ -281,19 +268,14 @@ module gold_miner::gold_miner {
         // Handle inviter rewards if exists
         handle_inviter_reward(user, treasury_obj, gold_miner, amount);
 
-
         // Handle random equipment
         random_equipment(player_address);
 
-        emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined}
-        );
+        emit(MineEvent { player: address_of(user), mined: amount, total_mined });
     }
 
     // internal function
-    public fun auto_mine(
-        user: &signer,
-    ) {
+    public fun auto_mine(user: &signer) {
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -334,7 +316,7 @@ module gold_miner::gold_miner {
             multiplier = multiplier + nft_multiplier;
         };
 
-        let amount = u256::multiple_and_divide(base_amount,multiplier, BPS);
+        let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
         gold_miner.mined = gold_miner.mined + amount;
         let total_mined = gold_miner.mined;
 
@@ -346,16 +328,10 @@ module gold_miner::gold_miner {
         // Handle inviter rewards if exists
         handle_inviter_reward(user, treasury_obj, gold_miner, amount);
 
-        emit(
-            MineEvent { player: address_of(user), mined: amount, total_mined }
-        );
+        emit(MineEvent { player: address_of(user), mined: amount, total_mined });
     }
 
-
-    public fun eat_hambuger(
-        user: &signer,
-        hambuger: Object<Hambuger>
-    ) {
+    public fun eat_hambuger(user: &signer, hambuger: Object<Hambuger>) {
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -364,10 +340,24 @@ module gold_miner::gold_miner {
         hambuger::burn(&player_address, hambuger);
         // Calculate and update hunger
         let hunger = calculate_and_update_hunger(gold_miner);
-
         //We add 301 energy for eating hambuger because it's decurase 1 energy by call calculate_and_update_hunger
         gold_miner.hunger = u64::min(hunger + 301, 1000);
         //TODO: lack for event
+    }
+
+    #[view]
+    public fun get_hunger_through_times(player_address: &address): u64 {
+        let gold_miner = account::borrow_resource<MineInfo>(*player_address);
+        let now = timestamp::now_seconds();
+        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
+        let hunger =
+            if (gold_miner.hunger >= 1000) {
+                gold_miner.hunger // Already at max
+            } else {
+                // Add 1 energy per second up to max
+                u64::min(gold_miner.hunger + time_passed, 1000)
+            };
+        hunger
     }
 
     fun create_invite(
@@ -419,8 +409,10 @@ module gold_miner::gold_miner {
     /// Returns the updated hunger value
     fun calculate_and_update_hunger(gold_miner: &mut MineInfo): u64 {
         let now = timestamp::now_seconds();
+
         // Calculate energy regeneration
-        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update,60);// 1 energy per minute
+        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
+
         let hunger =
             if (gold_miner.hunger >= 1000) {
                 gold_miner.hunger // Already at max
@@ -449,6 +441,7 @@ module gold_miner::gold_miner {
         // Iron Ore: 0.12% = 1.2/1000
         // Refining Potion: 0.01% = 0.1/1000
         // Stamina Potion: 0.02% = 0.2/1000
+
         if (number < 1) {
             //Refining Potion
             let potion = refining_potion::mint();
@@ -460,12 +453,10 @@ module gold_miner::gold_miner {
                 }
             );
         } else if (number < 3) {
+            //TODO: Relace this to hambuger from Stamina Potion
             let hambuger = hambuger::mint(&player);
             object::transfer(hambuger, player);
-
-            emit(
-                EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_HAMBUGER }
-            );
+            emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_HAMBUGER });
         } else if (number < 8) {
             //Gold Ore
             let ore = gold_ore::mint(1);
@@ -489,22 +480,6 @@ module gold_miner::gold_miner {
         }
     }
 
-
-    #[view]
-    public fun get_hunger_through_times(player_address: &address): u64 {
-        let gold_miner = account::borrow_resource<MineInfo>(*player_address);
-        let now = timestamp::now_seconds();
-        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update,60);// 1 energy per minute
-        let hunger =
-            if (gold_miner.hunger >= 1000) {
-                gold_miner.hunger // Already at max
-            } else {
-                // Add 1 energy per second up to max
-                u64::min(gold_miner.hunger + time_passed, 1000)
-            };
-        hunger
-    }
-
     // views function
     #[view]
     public fun get_mined(miner_obj: &Object<MineInfo>): u256 {
@@ -523,7 +498,6 @@ module gold_miner::gold_miner {
         let miner = object::borrow(miner_obj);
         miner.last_update
     }
-
 
     #[view]
     public fun get_inviter(miner_obj: &Object<MineInfo>): &option::Option<address> {
@@ -577,7 +551,7 @@ module gold_miner::gold_miner {
     }
 
     #[view]
-    public fun get_invite_info(user:&address): &TableVec<address> {
+    public fun get_invite_info(user: &address): &TableVec<address> {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
@@ -586,14 +560,13 @@ module gold_miner::gold_miner {
     }
 
     #[view]
-    public fun get_invite_reward(user:&address): u256 {
+    public fun get_invite_reward(user: &address): u256 {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
 
         *simple_map::borrow(&gold_miner.invite_reward, user)
     }
-
 
     #[test_only]
     public fun test_init() {

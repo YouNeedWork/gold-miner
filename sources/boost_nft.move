@@ -21,7 +21,7 @@ module gold_miner::boost_nft {
     const SEVEN_DAYS: u64 = 7 * 24 * 60 * 60;
     const THIRTY_DAYS: u64 = 30 * 24 * 60 * 60;
 
-    struct BoostNFT has key, store,drop {
+    struct BoostNFT has key, store, drop {
         multiplier: u64,
         expiry: u64, // Timestamp in seconds, 0 for permanent boosts
         active: bool
@@ -31,7 +31,6 @@ module gold_miner::boost_nft {
         multiplier: u64,
         owner: address
     }
-
 
     public entry fun mint_3x_boost_nft(account: &signer, duration: u64) {
         let nft_obj = mint_3x_boost(account, duration);
@@ -49,7 +48,7 @@ module gold_miner::boost_nft {
     }
 
     // Create a 3x boost NFT with specified duration
-    public fun mint_3x_boost(account: &signer, duration: u64):Object<BoostNFT> {
+    public fun mint_3x_boost(account: &signer, duration: u64): Object<BoostNFT> {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
 
         let nft = BoostNFT {
@@ -62,24 +61,16 @@ module gold_miner::boost_nft {
     }
 
     // Create an OG 2x boost NFT (permanent)
-    public fun mint_og_boost(account: &signer):Object<BoostNFT> {
-        let nft = BoostNFT {
-            multiplier: BOOST_2X,
-            expiry: 0,
-            active: false
-        };
+    public fun mint_og_boost(account: &signer): Object<BoostNFT> {
+        let nft = BoostNFT { multiplier: BOOST_2X, expiry: 0, active: false };
 
         object::new_named_object(nft)
     }
 
     // Create an early participant 1.7x boost NFT (permanent)
-    public fun mint_early_boost(account: &signer): Object<BoostNFT>{
-        let nft = BoostNFT {
-            multiplier: BOOST_1_7X,
-            expiry: 0,
-            active: false
-        };
-       object::new_named_object(nft)
+    public fun mint_early_boost(account: &signer): Object<BoostNFT> {
+        let nft = BoostNFT { multiplier: BOOST_1_7X, expiry: 0, active: false };
+        object::new_named_object(nft)
     }
 
     // Activate a boost NFT
@@ -104,22 +95,20 @@ module gold_miner::boost_nft {
         );
     }
 
-    public(friend) fun take_object_by_id(user :&signer,nft_obj: ObjectID): Object<BoostNFT> {
-        object::take_object<BoostNFT>(user,nft_obj)
+    public(friend) fun take_object_by_id(user: &signer, nft_obj: ObjectID): Object<BoostNFT> {
+        object::take_object<BoostNFT>(user, nft_obj)
     }
 
-    public(friend) fun remove_object(nft_obj:Object<BoostNFT>):BoostNFT {
+    public(friend) fun remove_object(nft_obj: Object<BoostNFT>): BoostNFT {
         object::remove<BoostNFT>(nft_obj)
     }
 
-    public(friend) fun new_object(nft_obj:BoostNFT):Object<BoostNFT> {
+    public(friend) fun new_object(nft_obj: BoostNFT): Object<BoostNFT> {
         object::new_named_object<BoostNFT>(nft_obj)
     }
 
     // Deactivate a boost NFT
-    public fun deactivate_boost(
-        account: &signer, nft: &mut BoostNFT
-    ) {
+    public fun deactivate_boost(account: &signer, nft: &mut BoostNFT) {
         nft.active = false;
     }
 
@@ -145,7 +134,6 @@ module gold_miner::boost_nft {
 
         //TODO: lack event emit
     }
-
 
     #[test_only]
     public fun test_init_3x(user: &signer): Object<BoostNFT> {
