@@ -1,4 +1,5 @@
-module gold_miner::harvest {
+module gold_miner::tasks {
+    /*
     use std::signer::address_of;
     use moveos_std::object::Object;
 
@@ -15,10 +16,7 @@ module gold_miner::harvest {
 
     /// With auto miner, hunger is not consumed
     public fun auto_mine_harvest(
-        user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
-        miner_obj: &mut Object<gold_miner::MineInfo>,
-        auto_miner_obj: &mut Object<auto_miner::AutoMiner>
+        user: &signer
     ) {
         let harvest_amount = auto_miner::get_harvest_amount(auto_miner_obj);
         let harvest_amount =
@@ -38,4 +36,5 @@ module gold_miner::harvest {
             }
         );
     }
+    */
 }

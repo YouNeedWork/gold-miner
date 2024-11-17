@@ -1,14 +1,15 @@
 module gold_miner::auto_miner {
+    use std::debug::print;
     use std::signer::address_of;
+    use moveos_std::account;
     use gold_miner::gold::Gold;
-    use moveos_std::object::{Object};
     use moveos_std::object;
     use moveos_std::timestamp;
     use moveos_std::event;
     use gold_miner::gold;
     use rooch_framework::account_coin_store;
 
-    friend gold_miner::harvest;
+    friend gold_miner::gold_miner;
 
     // Error codes
     const E_INVALID_MINER_TYPE: u64 = 1;
@@ -25,7 +26,16 @@ module gold_miner::auto_miner {
     const SEVEN_DAYS: u64 = 604800; // 7 * 24 * 60 * 60
     const TWENTY_ONE_DAYS: u64 = 1814400; // 21 * 24 * 60 * 60
 
-    struct AutoMiner has key {
+    struct Config has key {
+        manual_miner_cost: u64,
+        hydro_miner_cost: u64,
+        electric_miner_cost: u64,
+        manual_mining_power: u64,
+        hydro_mining_power: u64,
+        electric_mining_power: u64
+    }
+
+    struct AutoMiner has store,drop {
         owner: address,
         miner_type: u8,
         mining_power: u64,
@@ -35,6 +45,7 @@ module gold_miner::auto_miner {
         total_mined: u64
     }
 
+    //events
     struct MinerPurchaseEvent has copy, drop {
         owner: address,
         miner_type: u8,
@@ -48,12 +59,23 @@ module gold_miner::auto_miner {
         total_mined: u64
     }
 
-    public fun purchase_miner(
+    fun init(user:&signer) {
+        let config = Config {
+            manual_miner_cost: 30_000,    //3w
+            hydro_miner_cost: 50_000,     //5w
+            electric_miner_cost: 100_000, //10w
+            manual_mining_power: 3,
+            hydro_mining_power: 5,
+            electric_mining_power: 10
+        };
+        account::move_resource_to(user,config);
+    }
+
+    public(friend) fun purchase_miner(
         user: &signer,
-        treasury_obj: &mut Object<gold::Treasury>,
         miner_type: u8,
         duration: u64
-    ) {
+    ):AutoMiner {
         let cost = calculate_cost(miner_type, duration);
         let mining_power = get_mining_power(miner_type);
 
@@ -81,25 +103,27 @@ module gold_miner::auto_miner {
         };
 
         // Pay for miner
+        let treasury_obj = gold::get_treasury();
         let treasury = object::borrow_mut(treasury_obj);
         let cost_coin = account_coin_store::withdraw<Gold>(user, (cost as u256));
         gold::burn(treasury, cost_coin);
-
         event::emit(
             MinerPurchaseEvent { owner: address_of(user), miner_type, duration, cost }
         );
 
-        object::transfer_extend(object::new_named_object(auto_miner), address_of(user));
+        auto_miner
     }
 
     fun calculate_cost(miner_type: u8, duration: u64): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+
         let base_cost =
             if (miner_type == MANUAL_MINER) {
-                100_000 // 10w
+                config.manual_miner_cost // 3w
             } else if (miner_type == HYDRO_MINER) {
-                200_000 // 20w
+                config.hydro_miner_cost // 5w
             } else {
-                350_000 // 35w
+                config.electric_miner_cost // 10w
             };
 
         let duration_multiplier =
@@ -111,26 +135,51 @@ module gold_miner::auto_miner {
     }
 
     fun get_mining_power(miner_type: u8): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+
         if (miner_type == MANUAL_MINER) {
-            3 // 3 clicks per second
+            config.manual_mining_power
         } else if (miner_type == HYDRO_MINER) {
-            10 // 10 clicks per second
+            config.hydro_mining_power
         } else {
-            30 // 30 clicks per second
+            config.electric_mining_power
         }
     }
 
-    public(friend) fun get_harvest_amount(miner: &mut Object<AutoMiner>): u64 {
+    public fun is_expired(auto_miner: &AutoMiner): bool {
         let now = timestamp::now_seconds();
-        let auto_miner = object::borrow_mut(miner);
-        // Check if miner has expired
-        assert!(now <= auto_miner.start_time + auto_miner.duration, 1); // "Auto miner expired"
+        now > auto_miner.start_time + auto_miner.duration
+    }
+
+    public(friend) fun get_harvest_amount(auto_miner: &mut AutoMiner): u64 {
+        let now = timestamp::now_seconds();
+
+        let now = if (now > auto_miner.start_time + auto_miner.duration) {
+            auto_miner.start_time + auto_miner.duration
+        } else {
+            now
+        };
+
         // Calculate rewards
         let time_since_last_claim = now - auto_miner.last_claim;
-        let rewards = time_since_last_claim * auto_miner.mining_power;
+        let rewards = time_since_last_claim * auto_miner.mining_power / 60; //per minute
         auto_miner.last_claim = now;
 
         rewards
+    }
+
+    public(friend) fun burn(auto_miner: AutoMiner){
+        let AutoMiner{
+            owner: _,
+            miner_type: _,
+            mining_power: _,
+            start_time: _,
+            duration: _,
+            last_claim: _,
+            total_mined: _
+        } = auto_miner;
+
+        //TODO: lack event
     }
 
     #[view]
@@ -144,5 +193,61 @@ module gold_miner::auto_miner {
             miner.last_claim,
             miner.total_mined
         )
+    }
+
+
+    #[view]
+    public fun get_config(): (u64, u64, u64, u64, u64, u64) {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        (
+            config.manual_mining_power,
+            config.hydro_mining_power, 
+            config.electric_mining_power,
+            config.manual_miner_cost,
+            config.hydro_miner_cost,
+            config.electric_miner_cost
+        )
+    }
+
+    #[view]
+    public fun get_manual_mining_power(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.manual_mining_power
+    }
+
+    #[view] 
+    public fun get_hydro_mining_power(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.hydro_mining_power
+    }
+
+    #[view]
+    public fun get_electric_mining_power(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.electric_mining_power
+    }
+
+    #[view]
+    public fun get_manual_miner_cost(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.manual_miner_cost
+    }
+
+    #[view]
+    public fun get_hydro_miner_cost(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.hydro_miner_cost
+    }
+
+    #[view]
+    public fun get_electric_miner_cost(): u64 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        config.electric_miner_cost
+    }
+
+
+    #[test_only]
+    public fun test_init(user:&signer) {
+        init(user);
     }
 }

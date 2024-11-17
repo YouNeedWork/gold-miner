@@ -38,6 +38,16 @@ module gold_miner::boost_nft {
         object::transfer(nft_obj, signer::address_of(account));
     }
 
+    public entry fun mint_og_boost_nft(account: &signer, duration: u64) {
+        let nft_obj = mint_og_boost(account);
+        object::transfer(nft_obj, signer::address_of(account));
+    }
+
+    public entry fun mint_early_boost_nft(account: &signer, duration: u64) {
+        let nft_obj = mint_early_boost(account);
+        object::transfer(nft_obj, signer::address_of(account));
+    }
+
     // Create a 3x boost NFT with specified duration
     public fun mint_3x_boost(account: &signer, duration: u64):Object<BoostNFT> {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
@@ -52,25 +62,24 @@ module gold_miner::boost_nft {
     }
 
     // Create an OG 2x boost NFT (permanent)
-    public fun mint_og_boost(account: &signer) {
+    public fun mint_og_boost(account: &signer):Object<BoostNFT> {
         let nft = BoostNFT {
             multiplier: BOOST_2X,
             expiry: 0,
             active: false
         };
-        let nft_obj = object::new(nft);
-        object::transfer(nft_obj, signer::address_of(account));
+
+        object::new_named_object(nft)
     }
 
     // Create an early participant 1.7x boost NFT (permanent)
-    public fun mint_early_boost(account: &signer) {
+    public fun mint_early_boost(account: &signer): Object<BoostNFT>{
         let nft = BoostNFT {
             multiplier: BOOST_1_7X,
             expiry: 0,
             active: false
         };
-        let nft_obj = object::new(nft);
-        object::transfer(nft_obj, signer::address_of(account));
+       object::new_named_object(nft)
     }
 
     // Activate a boost NFT
@@ -144,12 +153,12 @@ module gold_miner::boost_nft {
     }
 
     #[test_only]
-    public fun test_init_og_2x(user: &signer) {
-        mint_og_boost(user);
+    public fun test_init_og_2x(user: &signer): Object<BoostNFT> {
+        mint_og_boost(user)
     }
 
     #[test_only]
-    public fun test_init_early_1_7x(user: &signer) {
-        mint_early_boost(user);
+    public fun test_init_early_1_7x(user: &signer): Object<BoostNFT> {
+        mint_early_boost(user)
     }
 }
