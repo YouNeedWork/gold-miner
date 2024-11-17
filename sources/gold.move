@@ -12,6 +12,7 @@ module gold_miner::gold {
     friend gold_miner::boost_nft;
     friend gold_miner::auto_miner;
     friend gold_miner::daily_check_in;
+    friend gold_miner::tasks;
 
     const TOTAL_SUPPLY: u256 =
         115792089237316195423570985008687907853269984665640564039457584007913129639935;

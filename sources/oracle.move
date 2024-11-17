@@ -33,7 +33,7 @@ module gold_miner::oracle {
     }
 
     /// Update the oracle address. Only the current oracle can update.
-    public fun update_oracle_address(
+    entry fun update_oracle_address(
         user: &signer, _: &Object<AdminCap>, new_oracle: address
     ) {
         let config = account::borrow_mut_resource<OracleConfig>(@gold_miner);
