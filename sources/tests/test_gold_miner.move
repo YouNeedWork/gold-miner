@@ -95,7 +95,7 @@ module gold_miner::test_gold_miner {
             i = i + 1;
         };
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 1100 * 1_000_000, 1);
-        timestamp::fast_forward_seconds_for_test(120);
+        timestamp::fast_forward_seconds_for_test(60*120);
 
         let i = 0;
         while (i < 120) {
@@ -116,14 +116,16 @@ module gold_miner::test_gold_miner {
             i = i + 1;
         };
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 1100 * 1_000_000, 1);
-        timestamp::fast_forward_seconds_for_test(120);
+        timestamp::fast_forward_seconds_for_test(60*120);
 
         let i = 0;
         while (i < 120) {
+
             gold_miner::mine(user);
             i = i + 1;
         };
         assert!(account_coin_store::balance<gold::Gold>(@0x42) == 1220 * 1_000_000, 1);
+
         gold_miner::mine(user);
     }
 

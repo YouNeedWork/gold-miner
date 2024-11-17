@@ -364,7 +364,6 @@ module gold_miner::gold_miner {
         table_vec::push_back(invitees, invitee);
     }
 
-
     fun handle_inviter_reward(
         user: &signer,
         treasury_obj: &mut Object<gold::Treasury>,
@@ -398,7 +397,8 @@ module gold_miner::gold_miner {
         let now = timestamp::now_seconds();
 
         // Calculate energy regeneration
-        let time_passed = now - gold_miner.last_update;
+        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update,60);// 1 energy per minute
+
         let hunger =
             if (gold_miner.hunger >= 1000) {
                 gold_miner.hunger // Already at max
