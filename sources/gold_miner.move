@@ -1,7 +1,10 @@
 module gold_miner::gold_miner {
+    use std::debug::print;
     use std::option;
     use std::u256;
     use std::u64;
+    use gold_miner::hambuger;
+    use gold_miner::hambuger::Hambuger;
     use gold_miner::boost_nft::BoostNFT;
     use moveos_std::account;
     use gold_miner::boost_nft;
@@ -24,7 +27,6 @@ module gold_miner::gold_miner {
     use gold_miner::copper_ore;
     use gold_miner::iron_ore;
     use gold_miner::refining_potion;
-    use gold_miner::stamina_potion;
     use gold_miner::gold;
     use gold_miner::auto_miner;
 
@@ -34,7 +36,7 @@ module gold_miner::gold_miner {
     const BPS: u256 = 10000;
     /// Equipment types
     const EQUIPMENT_TYPE_REFINING_POTION: u8 = 1;
-    const EQUIPMENT_TYPE_STAMINA_POTION: u8 = 2;
+    const EQUIPMENT_TYPE_HAMBUGER: u8 = 2;
     const EQUIPMENT_TYPE_GOLD_ORE: u8 = 3;
     const EQUIPMENT_TYPE_SILVER_ORE: u8 = 4;
     const EQUIPMENT_TYPE_COPPER_ORE: u8 = 5;
@@ -279,6 +281,10 @@ module gold_miner::gold_miner {
         // Handle inviter rewards if exists
         handle_inviter_reward(user, treasury_obj, gold_miner, amount);
 
+
+        // Handle random equipment
+        random_equipment(player_address);
+
         emit(
             MineEvent { player: address_of(user), mined: amount, total_mined}
         );
@@ -346,6 +352,24 @@ module gold_miner::gold_miner {
     }
 
 
+    public fun eat_hambuger(
+        user: &signer,
+        hambuger: Object<Hambuger>
+    ) {
+        // Get player address
+        let player_address = address_of(user);
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
+
+        hambuger::burn(&player_address, hambuger);
+        // Calculate and update hunger
+        let hunger = calculate_and_update_hunger(gold_miner);
+
+        //We add 301 energy for eating hambuger because it's decurase 1 energy by call calculate_and_update_hunger
+        gold_miner.hunger = u64::min(hunger + 301, 1000);
+        //TODO: lack for event
+    }
+
     fun create_invite(
         gold_miner: &mut GoldMiner, inviter: address, invitee: address
     ) {
@@ -395,10 +419,8 @@ module gold_miner::gold_miner {
     /// Returns the updated hunger value
     fun calculate_and_update_hunger(gold_miner: &mut MineInfo): u64 {
         let now = timestamp::now_seconds();
-
         // Calculate energy regeneration
         let time_passed = u64::divide_and_round_up(now - gold_miner.last_update,60);// 1 energy per minute
-
         let hunger =
             if (gold_miner.hunger >= 1000) {
                 gold_miner.hunger // Already at max
@@ -427,7 +449,6 @@ module gold_miner::gold_miner {
         // Iron Ore: 0.12% = 1.2/1000
         // Refining Potion: 0.01% = 0.1/1000
         // Stamina Potion: 0.02% = 0.2/1000
-
         if (number < 1) {
             //Refining Potion
             let potion = refining_potion::mint();
@@ -439,11 +460,11 @@ module gold_miner::gold_miner {
                 }
             );
         } else if (number < 3) {
-            //Stamina Potion
-            let potion = stamina_potion::mint();
-            object::transfer(potion, player);
+            let hambuger = hambuger::mint(&player);
+            object::transfer(hambuger, player);
+
             emit(
-                EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_STAMINA_POTION }
+                EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_HAMBUGER }
             );
         } else if (number < 8) {
             //Gold Ore
@@ -468,6 +489,21 @@ module gold_miner::gold_miner {
         }
     }
 
+
+    #[view]
+    public fun get_hunger_through_times(player_address: &address): u64 {
+        let gold_miner = account::borrow_resource<MineInfo>(*player_address);
+        let now = timestamp::now_seconds();
+        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update,60);// 1 energy per minute
+        let hunger =
+            if (gold_miner.hunger >= 1000) {
+                gold_miner.hunger // Already at max
+            } else {
+                // Add 1 energy per second up to max
+                u64::min(gold_miner.hunger + time_passed, 1000)
+            };
+        hunger
+    }
 
     // views function
     #[view]
