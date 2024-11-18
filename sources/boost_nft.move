@@ -40,6 +40,10 @@ module gold_miner::boost_nft {
         price_30_days: u256,
         /// Owner address of the project
         owner_address: address,
+        /// 7days price total
+        total_7_days: u256,
+        /// 30days price total
+        total_30_days: u256,
         /// Merkle root for OG boost NFT whitelist
         og_merkle_root: vector<u8>,
         /// Merkle root for early participant boost NFT whitelist
@@ -55,8 +59,6 @@ module gold_miner::boost_nft {
         early_merkle_root: vector<u8>
     }
 
-  
-
     struct BoostNFT has key, store, drop {
         multiplier: u64,
         expiry: u64, // Timestamp in seconds, 0 for permanent boosts
@@ -71,21 +73,42 @@ module gold_miner::boost_nft {
     /// Track user's minting counts
     struct UserMintRecord has key {
         og_minted: u64,
-        early_minted: u64,
+        early_minted: u64
     }
 
     /// User mint info for merkle proof verification
     struct UserMintInfo has drop {
         user: address,
         og_limit: u64,
-        early_limit: u64,
+        early_limit: u64
     }
-      /// Initialize config with default values
+
+    struct BoostMinted has copy, drop {
+        multiplier: u64,
+        expiry: u64,
+        owner: address,
+        price_paid: u256
+    }
+
+    struct BoostBurned has copy, drop {
+        multiplier: u64,
+        owner: address
+    }
+
+    struct PaymentProcessed has copy, drop {
+        from: address,
+        to: address,
+        amount: u256
+    }
+
+    /// Initialize config with default values
     fun init(admin: &signer) {
         let config = Config {
             price_7_days: 10_000_000_000, // 100 Gas tokens
             price_30_days: 30_000_000_000, // 300 Gas tokens
             owner_address: address_of(admin),
+            total_7_days: 0,
+            total_30_days: 0,
             og_merkle_root: vector[],
             early_merkle_root: vector[]
         };
@@ -125,23 +148,27 @@ module gold_miner::boost_nft {
     // Initialize user mint record if not exists
     fun ensure_user_mint_record(user: &signer) {
         if (!account::exists_resource<UserMintRecord>(address_of(user))) {
-            account::move_resource_to(user, UserMintRecord {
-                og_minted: 0,
-                early_minted: 0,
-            });
+            account::move_resource_to(
+                user,
+                UserMintRecord { og_minted: 0, early_minted: 0 }
+            );
         }
     }
-
 
     // Create a 3x boost NFT with specified duration
     public entry fun mint_3x_boost(account: &signer, duration: u64) {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
 
-        let config = account::borrow_resource<Config>(@gold_miner);
-        if (duration == SEVEN_DAYS) {
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
+        let price = if (duration == SEVEN_DAYS) {
             charge_gas_token(account, config.price_7_days);
+            config.total_7_days = config.total_7_days + config.price_7_days;
+            config.price_7_days
         } else {
             charge_gas_token(account, config.price_30_days);
+            config.total_30_days = config.total_30_days + config.price_30_days;
+
+            config.price_30_days
         };
 
         let nft = BoostNFT {
@@ -149,23 +176,32 @@ module gold_miner::boost_nft {
             expiry: timestamp::now_seconds() + duration,
             active: false
         };
+        event::emit(
+            BoostMinted {
+                multiplier: BOOST_3X,
+                expiry: timestamp::now_seconds() + duration,
+                owner:address_of(account),
+                price_paid: price
+            }
+        );
 
         object::transfer(object::new_named_object(nft), address_of(account));
     }
 
     // Create an OG 2x boost NFT (permanent)
     entry fun mint_og_boost(
-        account: &signer, 
+        account: &signer,
         proof: vector<vector<u8>>,
-        amount: u64,
-    ){
+        amount: u64
+    ) {
         ensure_user_mint_record(account);
-        let user_record = account::borrow_mut_resource<UserMintRecord>(address_of(account));
+        let user_record =
+            account::borrow_mut_resource<UserMintRecord>(address_of(account));
 
         // Check if user has reached their personal mint limit
         assert!(user_record.og_minted < amount, 0);
 
-        let config = account::borrow_resource<Config>(@gold_miner);
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
 
         let bytes_user = bcs::to_bytes(&address_of(account));
         vector::append(&mut bytes_user, bcs::to_bytes(&amount));
@@ -182,35 +218,45 @@ module gold_miner::boost_nft {
 
         let i = 0;
         while (i < amount) {
+            event::emit(
+                BoostMinted {
+                    multiplier: BOOST_2X,
+                    expiry: 0,
+                    owner: address_of(account),
+                    price_paid: config.price_7_days
+                }
+            );
+
             charge_gas_token(account, config.price_7_days);
+            config.total_7_days = config.total_7_days + config.price_7_days;
             let nft = BoostNFT { multiplier: BOOST_2X, expiry: 0, active: false };
             object::transfer(object::new_named_object(nft), address_of(account));
             i = i + 1;
         };
-        
+
     }
 
     // Create an early participant 1.7x boost NFT (permanent)
     public entry fun mint_early_boost(
-        account: &signer, 
+        account: &signer,
         proof: vector<vector<u8>>,
-        amount: u64,
+        amount: u64
     ) {
         ensure_user_mint_record(account);
-        let user_record = account::borrow_mut_resource<UserMintRecord>(address_of(account));
-        
+        let user_record =
+            account::borrow_mut_resource<UserMintRecord>(address_of(account));
+
         // Check if user has reached their personal mint limit
         assert!(user_record.early_minted < amount, 0);
 
-
         let bytes_user = bcs::to_bytes(&address_of(account));
         vector::append(&mut bytes_user, bcs::to_bytes(&amount));
-        let config = account::borrow_resource<Config>(@gold_miner);
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
         assert!(
             merkle_proof::verify(
                 &proof,
                 config.early_merkle_root,
-                bytes_user,
+                bytes_user
             ),
             EERROR_INVALID_PROOF
         );
@@ -219,8 +265,18 @@ module gold_miner::boost_nft {
 
         let i = 0;
         while (i < amount) {
+            event::emit(
+                BoostMinted {
+                    multiplier: BOOST_1_7X,
+                    expiry: 0,
+                    owner: address_of(account),
+                    price_paid: config.price_7_days
+                }
+            );
+
             charge_gas_token(account, config.price_7_days);
             let nft = BoostNFT { multiplier: BOOST_1_7X, expiry: 0, active: false };
+            config.total_7_days = config.total_7_days + config.price_7_days;
             object::transfer(object::new_named_object(nft), address_of(account));
             i = i + 1;
         };
@@ -252,7 +308,9 @@ module gold_miner::boost_nft {
     fun charge_gas_token(account: &signer, amount: u256) {
         let config = account::borrow_resource<Config>(@gold_miner);
         account_coin_store::transfer<RGas>(account, config.owner_address, amount);
-        //TODO:Lack for event emit
+        event::emit(
+            PaymentProcessed { from: address_of(account), to: config.owner_address, amount }
+        );
     }
 
     //views
@@ -326,5 +384,10 @@ module gold_miner::boost_nft {
         };
         let record = account::borrow_resource<UserMintRecord>(user_addr);
         (record.og_minted, record.early_minted)
+    }
+
+    #[test_only]
+    public fun test_init(user:&signer) {
+       init(user);
     }
 }

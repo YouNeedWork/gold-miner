@@ -59,7 +59,11 @@ module gold_miner::tasks {
         // Verify signature from tenant's oracle
         assert!(
             verify_signature(
-                config.oracle_address, player_address, task_id, reward, signature
+                config.oracle_address,
+                player_address,
+                task_id,
+                reward,
+                signature
             ),
             EERROR_INVALID_SIGNATURE
         );
@@ -74,9 +78,7 @@ module gold_miner::tasks {
         account_coin_store::deposit(player_address, reward_coins);
 
         // Emit completion event
-        event::emit(
-            TaskCompletedEvent { player: player_address, task_id, reward }
-        );
+        event::emit(TaskCompletedEvent { player: player_address, task_id, reward });
     }
 
     /// View function to check if a task has been completed
