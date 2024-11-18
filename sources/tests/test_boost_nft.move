@@ -119,4 +119,6 @@ module gold_miner::test_boost_nft {
 
         assert!(account_coin_store::balance<RGas>(@0x41) == 10_000_000_000,1);
     }
+
+    //TODO: handle merkle tree verify for og early
 }
