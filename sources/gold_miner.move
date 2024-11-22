@@ -213,10 +213,10 @@ module gold_miner::gold_miner {
         let nft_obj = option::extract(&mut gold_miner.boost_nft);
         assert!(boost_nft::is_active(&nft_obj), 1); // "Boost NFT is not active"
         if (boost_nft::is_expired(&nft_obj)) {
-            boost_nft::deactivate_boost(user, &mut nft_obj);
-            boost_nft::burn_boost(user, nft_obj);
+            boost_nft::deactivate_boost(&mut nft_obj);
+            boost_nft::burn_boost(nft_obj);
         } else {
-            boost_nft::deactivate_boost(user, &mut nft_obj);
+            boost_nft::deactivate_boost(&mut nft_obj);
             object::transfer(boost_nft::new_object(nft_obj), player_address);
         }
     }

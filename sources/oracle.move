@@ -25,8 +25,9 @@ module gold_miner::oracle {
         account::move_resource_to(deployer, config);
     }
 
-    /// Get the oracle address
+    
     #[view]
+    /// Get the oracle address
     public fun get_oracle_address(): address {
         let config = account::borrow_resource<OracleConfig>(@gold_miner);
         config.oracle_address
@@ -34,7 +35,7 @@ module gold_miner::oracle {
 
     /// Update the oracle address. Only the current oracle can update.
     entry fun update_oracle_address(
-        user: &signer, _: &Object<AdminCap>, new_oracle: address
+        _: &mut Object<AdminCap>, new_oracle: address
     ) {
         let config = account::borrow_mut_resource<OracleConfig>(@gold_miner);
         let old_oracle = config.oracle_address;

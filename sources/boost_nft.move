@@ -3,7 +3,7 @@ module gold_miner::boost_nft {
     use std::vector;
     use rooch_framework::gas_coin::RGas;
     use rooch_framework::account_coin_store;
-    use rooch_framework::coin_store;
+    //use rooch_framework::coin_store;
     use moveos_std::signer::address_of;
     use moveos_std::bcs;
     use moveos_std::hash;
@@ -117,8 +117,7 @@ module gold_miner::boost_nft {
 
     /// update config
     public fun update_config(
-        user: &signer,
-        _: &Object<AdminCap>,
+        _: &mut Object<AdminCap>,
         price_7_days: u256,
         price_30_days: u256,
         owner_address: address,
@@ -327,7 +326,7 @@ module gold_miner::boost_nft {
     }
 
     // Deactivate a boost NFT
-    public fun deactivate_boost(account: &signer, nft: &mut BoostNFT) {
+    public fun deactivate_boost(nft: &mut BoostNFT) {
         nft.active = false;
     }
 
@@ -347,7 +346,7 @@ module gold_miner::boost_nft {
     }
 
     // burn a boost NFT
-    public fun burn_boost(account: &signer, nft: BoostNFT) {
+    public fun burn_boost(nft: BoostNFT) {
 
         let BoostNFT { multiplier: _, expiry: _, active: _ } = nft;
 

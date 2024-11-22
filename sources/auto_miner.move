@@ -1,5 +1,5 @@
 module gold_miner::auto_miner {
-    use std::debug::print;
+    //use std::debug::print;
     use std::signer::address_of;
     use gold_miner::admin::AdminCap;
     use moveos_std::object::Object;
@@ -177,7 +177,7 @@ module gold_miner::auto_miner {
 
     /// Update manual miner cost. Only admin can call.
     public fun update_manual_miner_cost(
-        _: &Object<AdminCap>, new_cost: u64
+        _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.manual_miner_cost = new_cost;
@@ -186,7 +186,7 @@ module gold_miner::auto_miner {
 
     /// Update hydro miner cost. Only admin can call.
     public fun update_hydro_miner_cost(
-        _: &Object<AdminCap>, new_cost: u64
+        _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.hydro_miner_cost = new_cost;
@@ -195,7 +195,7 @@ module gold_miner::auto_miner {
 
     /// Update electric miner cost. Only admin can call.
     public fun update_electric_miner_cost(
-        _: &Object<AdminCap>, new_cost: u64
+        _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.electric_miner_cost = new_cost;
@@ -204,7 +204,7 @@ module gold_miner::auto_miner {
 
     /// Update manual mining power. Only admin can call.
     public fun update_manual_mining_power(
-        _: &Object<AdminCap>, new_power: u64
+        _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.manual_mining_power = new_power;
@@ -213,7 +213,7 @@ module gold_miner::auto_miner {
 
     /// Update hydro mining power. Only admin can call.
     public fun update_hydro_mining_power(
-        _: &Object<AdminCap>, new_power: u64
+        _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.hydro_mining_power = new_power;
@@ -222,7 +222,7 @@ module gold_miner::auto_miner {
 
     /// Update electric mining power. Only admin can call.
     public fun update_electric_mining_power(
-        _: &Object<AdminCap>, new_power: u64
+        _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.electric_mining_power = new_power;

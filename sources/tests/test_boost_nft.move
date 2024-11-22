@@ -40,7 +40,7 @@ module gold_miner::test_boost_nft {
 
         // Deactivate boost
         let nft = object::borrow_mut(&mut nft_obj);
-        boost_nft::deactivate_boost(user, nft);
+        boost_nft::deactivate_boost(nft);
         assert!(!boost_nft::is_active(nft), 1);
 
         object::to_shared(nft_obj);
@@ -71,8 +71,7 @@ module gold_miner::test_boost_nft {
         let new_early_root = vector[4, 5, 6];
 
         boost_nft::update_config(
-            user,
-            &admin_cap,
+            &mut admin_cap,
             new_price_7_days,
             new_price_30_days,
             new_owner,
@@ -95,8 +94,7 @@ module gold_miner::test_boost_nft {
         let new_early_root = vector[4, 5, 6];
 
         boost_nft::update_config(
-            user,
-            &admin_cap,
+            &mut admin_cap,
             new_price_7_days,
             new_price_30_days,
             new_owner,
