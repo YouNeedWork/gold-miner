@@ -55,7 +55,7 @@ module gold_miner::tasks {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.oracle_address = oracle_address;
 
-        emit(OracleAddressChangedEvent{oracle_address});
+        emit(OracleAddressChangedEvent { oracle_address });
     }
 
     /// Claim reward for completing a task
@@ -165,7 +165,8 @@ module gold_miner::tasks {
     #[test]
     fun test_ecrecover_to_address() {
         let msg = b"Hello";
-        let signature = x"cee56d70230696268e77b9b21eed4a455f3b6cc67cd30f33739d16226c996169282f0296ccb6bbf06b517f649abf7a7a12d08cef85ef282890f1d445b8e7c16f00";
+        let signature =
+            x"cee56d70230696268e77b9b21eed4a455f3b6cc67cd30f33739d16226c996169282f0296ccb6bbf06b517f649abf7a7a12d08cef85ef282890f1d445b8e7c16f00";
         let addr = ecrecover_to_address(signature, msg);
         assert!(addr == x"105d8b0c9a03f506f85796789561142cf335280e", 1);
     }

@@ -159,16 +159,17 @@ module gold_miner::boost_nft {
         assert!(duration == SEVEN_DAYS || duration == THIRTY_DAYS, 0);
 
         let config = account::borrow_mut_resource<Config>(@gold_miner);
-        let price = if (duration == SEVEN_DAYS) {
-            charge_gas_token(account, config.price_7_days);
-            config.total_7_days = config.total_7_days + config.price_7_days;
-            config.price_7_days
-        } else {
-            charge_gas_token(account, config.price_30_days);
-            config.total_30_days = config.total_30_days + config.price_30_days;
+        let price =
+            if (duration == SEVEN_DAYS) {
+                charge_gas_token(account, config.price_7_days);
+                config.total_7_days = config.total_7_days + config.price_7_days;
+                config.price_7_days
+            } else {
+                charge_gas_token(account, config.price_30_days);
+                config.total_30_days = config.total_30_days + config.price_30_days;
 
-            config.price_30_days
-        };
+                config.price_30_days
+            };
 
         let nft = BoostNFT {
             multiplier: BOOST_3X,
@@ -179,7 +180,7 @@ module gold_miner::boost_nft {
             BoostMinted {
                 multiplier: BOOST_3X,
                 expiry: timestamp::now_seconds() + duration,
-                owner:address_of(account),
+                owner: address_of(account),
                 price_paid: price
             }
         );
@@ -189,9 +190,7 @@ module gold_miner::boost_nft {
 
     // Create an OG 2x boost NFT (permanent)
     entry fun mint_og_boost(
-        account: &signer,
-        proof: vector<vector<u8>>,
-        amount: u64
+        account: &signer, proof: vector<vector<u8>>, amount: u64
     ) {
         ensure_user_mint_record(account);
         let user_record =
@@ -237,9 +236,7 @@ module gold_miner::boost_nft {
 
     // Create an early participant 1.7x boost NFT (permanent)
     public entry fun mint_early_boost(
-        account: &signer,
-        proof: vector<vector<u8>>,
-        amount: u64
+        account: &signer, proof: vector<vector<u8>>, amount: u64
     ) {
         ensure_user_mint_record(account);
         let user_record =
@@ -386,7 +383,7 @@ module gold_miner::boost_nft {
     }
 
     #[test_only]
-    public fun test_init(user:&signer) {
-       init(user);
+    public fun test_init(user: &signer) {
+        init(user);
     }
 }

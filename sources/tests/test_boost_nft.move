@@ -79,12 +79,11 @@ module gold_miner::test_boost_nft {
             new_early_root
         );
 
-
         object::to_shared(admin_cap);
     }
 
     #[test_only]
-    fun test_for_change_owner(user:&signer) {
+    fun test_for_change_owner(user: &signer) {
         let admin_cap = admin::test_create();
 
         let new_price_7_days = 10_000_000_000;
@@ -102,20 +101,18 @@ module gold_miner::test_boost_nft {
             new_early_root
         );
 
-
         object::to_shared(admin_cap);
     }
-
 
     #[test(user = @gold_miner)]
     fun test_mint_3x(user: &signer) {
         test_init(user);
         test_for_change_owner(user);
         let coin = gas_coin::mint_for_test(10_000_000_000);
-        account_coin_store::deposit(address_of(user),coin);
-        boost_nft::mint_3x_boost(user, 7*24*60*60);
+        account_coin_store::deposit(address_of(user), coin);
+        boost_nft::mint_3x_boost(user, 7 * 24 * 60 * 60);
 
-        assert!(account_coin_store::balance<RGas>(@0x41) == 10_000_000_000,1);
+        assert!(account_coin_store::balance<RGas>(@0x41) == 10_000_000_000, 1);
     }
 
     //TODO: handle merkle tree verify for og early
