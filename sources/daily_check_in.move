@@ -14,7 +14,7 @@ module gold_miner::daily_check_in {
     struct CheckInRecord has key {
         owner: address,
         last_check_in: u64,
-        continue_days: u64,// for continue check in, if not check in, it will be reset to 0
+        continue_days: u64, // for continue check in, if not check in, it will be reset to 0
         total_days: u64
     }
 

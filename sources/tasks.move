@@ -49,8 +49,7 @@ module gold_miner::tasks {
 
     /// change the oracle address
     public entry fun change_oracle_address(
-        _: &mut Object<AdminCap>,
-        oracle_address:vector<u8>
+        _: &mut Object<AdminCap>, oracle_address: vector<u8>
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
         config.oracle_address = oracle_address;
@@ -102,7 +101,7 @@ module gold_miner::tasks {
     }
 
     #[view]
-    /// View function to check if a task has been completed 
+    /// View function to check if a task has been completed
     public fun is_task_completed(player: address, task_id: u64): bool {
         let task_record = account::borrow_resource<TaskRecord>(player);
         vector::contains(&task_record.completed_tasks, &task_id)
