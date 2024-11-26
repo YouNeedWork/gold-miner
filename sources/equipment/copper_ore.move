@@ -33,7 +33,7 @@ module gold_miner::copper_ore {
         let values = vector[
             utf8(b"Copper Ore {rarity}"),
             utf8(b"A basic ore that provides modest mining bonuses"),
-            utf8(b"") // placeholder URL
+            utf8(b"https://app.goldminer.life/nft/copper_ore_{rarity}.png") // placeholder URL
         ];
 
         let dis = display::display<CopperOre>();

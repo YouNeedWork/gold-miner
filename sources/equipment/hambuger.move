@@ -30,7 +30,7 @@ module gold_miner::hambuger {
         let values = vector[
             utf8(b"Hambuger"),
             utf8(b"A magical hambuger that restores health"),
-            utf8(b"") // placeholder URL
+            utf8(b"https://app.goldminer.life/nft/hambuger.png") // placeholder URL
         ];
 
         let dis = display::display<Hambuger>();

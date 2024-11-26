@@ -1,1 +1,1 @@
-rooch move run --function $PKG::gold_miner::start --args "object:$TREASURY" --args "address:$SENDER"
+rooch move run --function $PKG::gold_miner::start --args "address:$SENDER"

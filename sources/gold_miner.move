@@ -214,7 +214,7 @@ module gold_miner::gold_miner {
         assert!(boost_nft::is_active(&nft_obj), 1); // "Boost NFT is not active"
         if (boost_nft::is_expired(&nft_obj)) {
             boost_nft::deactivate_boost(&mut nft_obj);
-            boost_nft::burn_boost(nft_obj);
+            boost_nft::burn_boost(nft_obj, player_address);
         } else {
             boost_nft::deactivate_boost(&mut nft_obj);
             object::transfer(boost_nft::new_object(nft_obj), player_address);

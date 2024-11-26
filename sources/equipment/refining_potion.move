@@ -27,7 +27,7 @@ module gold_miner::refining_potion {
         let values = vector[
             utf8(b"Refining Potion"),
             utf8(b"A magical potion that enhances ore refining"),
-            utf8(b"") // placeholder URL
+            utf8(b"https://app.goldminer.life/nft/refining_potion_1.png") // placeholder URL
         ];
 
         let dis = display::display<RefiningPotion>();

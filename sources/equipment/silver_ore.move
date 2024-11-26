@@ -33,7 +33,7 @@ module gold_miner::silver_ore {
         let values = vector[
             utf8(b"Silver Ore {rarity}"),
             utf8(b"A valuable ore that provides enhanced mining bonuses"),
-            utf8(b"") // placeholder URL
+            utf8(b"https://app.goldminer.life/nft/silver_ore_{rarity}.png") // placeholder URL
         ];
 
         let dis = display::display<SilverOre>();

@@ -33,7 +33,7 @@ module gold_miner::iron_ore {
         let values = vector[
             utf8(b"Iron Ore {rarity}"),
             utf8(b"A common ore that provides basic mining bonuses"),
-            utf8(b"") // placeholder URL
+            utf8(b"https://app.goldminer.life/nft/iron_ore_{rarity}.png") // placeholder URL
         ];
 
         let dis = display::display<IronOre>();

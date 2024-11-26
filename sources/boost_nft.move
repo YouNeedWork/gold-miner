@@ -1,9 +1,11 @@
 module gold_miner::boost_nft {
     use std::signer;
+    use std::string;
+    use std::string::{String, utf8};
     use std::vector;
+    use moveos_std::display;
     use rooch_framework::gas_coin::RGas;
     use rooch_framework::account_coin_store;
-    //use rooch_framework::coin_store;
     use moveos_std::signer::address_of;
     use moveos_std::bcs;
     use moveos_std::hash;
@@ -60,6 +62,7 @@ module gold_miner::boost_nft {
     }
 
     struct BoostNFT has key, store, drop {
+        name: String,
         multiplier: u64,
         expiry: u64, // Timestamp in seconds, 0 for permanent boosts
         active: bool
@@ -91,6 +94,7 @@ module gold_miner::boost_nft {
     }
 
     struct BoostBurned has copy, drop {
+        name: String,
         multiplier: u64,
         owner: address
     }
@@ -113,6 +117,23 @@ module gold_miner::boost_nft {
             early_merkle_root: vector[]
         };
         account::move_resource_to(admin, config);
+
+        let keys = vector[utf8(b"name"), utf8(b"description"), utf8(b"image_url")];
+
+        let values = vector[
+            utf8(b"{name}"),
+            utf8(b"A NFT that boosts your mining rewards"),
+            utf8(b"https://app.goldminer.life/nft/boost_{name}.png") // placeholder URL
+        ];
+
+        let dis = display::display<BoostNFT>();
+        let key_len = vector::length(&keys);
+        while (key_len > 0) {
+            let key = vector::pop_back(&mut keys);
+            let value = vector::pop_back(&mut values);
+            display::set_value(dis, key, value);
+            key_len = key_len - 1;
+        }
     }
 
     /// update config
@@ -172,6 +193,7 @@ module gold_miner::boost_nft {
             };
 
         let nft = BoostNFT {
+            name: string::utf8(b"Boost"),
             multiplier: BOOST_3X,
             expiry: timestamp::now_seconds() + duration,
             active: false
@@ -212,10 +234,10 @@ module gold_miner::boost_nft {
             EERROR_INVALID_PROOF
         );
 
-        user_record.og_minted = user_record.og_minted + amount;
+        let can_mint = amount - user_record.og_minted;
 
         let i = 0;
-        while (i < amount) {
+        while (i < can_mint) {
             event::emit(
                 BoostMinted {
                     multiplier: BOOST_2X,
@@ -227,11 +249,17 @@ module gold_miner::boost_nft {
 
             charge_gas_token(account, config.price_7_days);
             config.total_7_days = config.total_7_days + config.price_7_days;
-            let nft = BoostNFT { multiplier: BOOST_2X, expiry: 0, active: false };
+            let nft = BoostNFT {
+                name: string::utf8(b"OG"),
+                multiplier: BOOST_2X,
+                expiry: 0,
+                active: false
+            };
             object::transfer(object::new_named_object(nft), address_of(account));
             i = i + 1;
         };
 
+        user_record.og_minted = amount;
     }
 
     // Create an early participant 1.7x boost NFT (permanent)
@@ -257,10 +285,10 @@ module gold_miner::boost_nft {
             EERROR_INVALID_PROOF
         );
 
-        user_record.early_minted = user_record.early_minted + amount;
-
+        let can_mint = amount - user_record.og_minted;
         let i = 0;
-        while (i < amount) {
+
+        while (i < can_mint) {
             event::emit(
                 BoostMinted {
                     multiplier: BOOST_1_7X,
@@ -271,11 +299,19 @@ module gold_miner::boost_nft {
             );
 
             charge_gas_token(account, config.price_7_days);
-            let nft = BoostNFT { multiplier: BOOST_1_7X, expiry: 0, active: false };
+            let nft = BoostNFT {
+                name: string::utf8(b"Early"),
+                multiplier: BOOST_1_7X,
+                expiry: 0,
+                active: false
+            };
+
             config.total_7_days = config.total_7_days + config.price_7_days;
             object::transfer(object::new_named_object(nft), address_of(account));
             i = i + 1;
         };
+
+        user_record.early_minted = user_record.early_minted + amount;
     }
 
     // Activate a boost NFT
@@ -343,16 +379,18 @@ module gold_miner::boost_nft {
     }
 
     // burn a boost NFT
-    public fun burn_boost(nft: BoostNFT) {
+    public fun burn_boost(nft: BoostNFT, owner: address) {
+        let BoostNFT { name, multiplier, expiry: _, active: _ } = nft;
 
-        let BoostNFT { multiplier: _, expiry: _, active: _ } = nft;
-
-        //TODO: lack event emit
+        event::emit(
+            BoostBurned { name, multiplier, owner }
+        );
     }
 
     #[test_only]
     public fun test_init_3x(user: &signer): Object<BoostNFT> {
         let nft = BoostNFT {
+            name: string::utf8(b"Boost"),
             multiplier: BOOST_3X,
             expiry: timestamp::now_seconds() + SEVEN_DAYS,
             active: false
@@ -363,13 +401,23 @@ module gold_miner::boost_nft {
 
     #[test_only]
     public fun test_init_og_2x(user: &signer): Object<BoostNFT> {
-        let nft = BoostNFT { multiplier: BOOST_2X, expiry: 0, active: false };
+        let nft = BoostNFT {
+            name: string::utf8(b"Boost"),
+            multiplier: BOOST_2X,
+            expiry: 0,
+            active: false
+        };
         object::new_named_object(nft)
     }
 
     #[test_only]
     public fun test_init_early_1_7x(user: &signer): Object<BoostNFT> {
-        let nft = BoostNFT { multiplier: BOOST_1_7X, expiry: 0, active: false };
+        let nft = BoostNFT {
+            name: string::utf8(b"Boost"),
+            multiplier: BOOST_1_7X,
+            expiry: 0,
+            active: false
+        };
         object::new_named_object(nft)
     }
 
