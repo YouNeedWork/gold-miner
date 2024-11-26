@@ -29,7 +29,7 @@ module gold_miner::gold {
             coin::register_extend<Gold>(
                 string::utf8(b"Rooch Gold Miner Game"),
                 string::utf8(b"Gold"),
-                option::none(), //TODO: add icon
+                option::some(string::utf8(b"https://app.goldminer.life/nft/gold.png")), // placeholder URL
                 DECIMALS
             );
 

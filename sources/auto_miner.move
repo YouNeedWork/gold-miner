@@ -1,5 +1,4 @@
 module gold_miner::auto_miner {
-    //use std::debug::print;
     use std::signer::address_of;
     use gold_miner::admin::AdminCap;
     use moveos_std::object::Object;
