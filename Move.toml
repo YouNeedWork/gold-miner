@@ -10,7 +10,7 @@ BitcoinMove = { git = "https://github.com/rooch-network/rooch.git", subdir = "fr
 grow-bitcoin = { local = "../grow-bitcoin"}
 
 [addresses]
-gold_miner = "0xde70ee91155c0b9deed1132852134ba2ffa5f17f0e74e7113882d01338081a65"
+gold_miner = "0x618d3587cb767303bcf6b8661293410726e38d8003737d95ea897310cce57994"
 
 std = "0x1"
 moveos_std = "0x2"

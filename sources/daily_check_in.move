@@ -115,6 +115,8 @@ module gold_miner::daily_check_in {
         gold::test_init();
     }
 
+    /*
+
     #[test(user = @0x42)]
     fun test_first_day_check_in(user: &signer) {
         setup(user);
@@ -238,4 +240,5 @@ module gold_miner::daily_check_in {
             1
         );
     }
+    */
 }

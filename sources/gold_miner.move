@@ -345,20 +345,6 @@ module gold_miner::gold_miner {
         //TODO: lack for event
     }
 
-    #[view]
-    public fun get_hunger_through_times(player_address: &address): u64 {
-        let gold_miner = account::borrow_resource<MineInfo>(*player_address);
-        let now = timestamp::now_seconds();
-        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
-        let hunger =
-            if (gold_miner.hunger >= 1000) {
-                gold_miner.hunger // Already at max
-            } else {
-                // Add 1 energy per second up to max
-                u64::min(gold_miner.hunger + time_passed, 1000)
-            };
-        hunger
-    }
 
     fun create_invite(
         gold_miner: &mut GoldMiner, inviter: address, invitee: address
@@ -411,15 +397,10 @@ module gold_miner::gold_miner {
         let now = timestamp::now_seconds();
 
         // Calculate energy regeneration
-        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
+        let time_passed = (now - gold_miner.last_update) / 60; // 1 energy per minute
 
-        let hunger =
-            if (gold_miner.hunger >= 1000) {
-                gold_miner.hunger // Already at max
-            } else {
-                // Add 1 energy per second up to max
-                u64::min(gold_miner.hunger + time_passed, 1000)
-            };
+        // Add 1 energy per second up to max
+        let hunger = u64::min(gold_miner.hunger + time_passed, 1000);
 
         // Require at least 1 energy to mine
         assert!(hunger >= 1, EERROR_NOT_ENOUGH_ENERGY); // "Not enough energy to mine"
@@ -453,7 +434,6 @@ module gold_miner::gold_miner {
                 }
             );
         } else if (number < 3) {
-            //TODO: Relace this to hambuger from Stamina Potion
             let hambuger = hambuger::mint(&player);
             object::transfer(hambuger, player);
             emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_HAMBUGER });
@@ -478,6 +458,21 @@ module gold_miner::gold_miner {
             object::transfer(ore, player);
             emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_IRON_ORE });
         }
+    }
+
+    #[view]
+    public fun get_hunger_through_times(player_address: address): u64 {
+        let gold_miner = account::borrow_resource<MineInfo>(player_address);
+        let now = timestamp::now_seconds();
+        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
+        let hunger =
+            if (gold_miner.hunger >= 1000) {
+                gold_miner.hunger // Already at max
+            } else {
+                // Add 1 energy per second up to max
+                u64::min(gold_miner.hunger + time_passed, 1000)
+            };
+        hunger
     }
 
     // views function
@@ -550,22 +545,14 @@ module gold_miner::gold_miner {
         gold_miner.invite_reward_rate
     }
 
+
     #[view]
-    public fun get_invite_info(user: &address): &TableVec<address> {
+    public fun get_invite_reward(user: address): u256 {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
 
-        simple_map::borrow(&gold_miner.invite_info, user)
-    }
-
-    #[view]
-    public fun get_invite_reward(user: &address): u256 {
-        let gold_miner_obj_id = object::named_object_id<GoldMiner>();
-        let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
-        let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
-
-        *simple_map::borrow(&gold_miner.invite_reward, user)
+        *simple_map::borrow(&gold_miner.invite_reward, &user)
     }
 
     #[test_only]

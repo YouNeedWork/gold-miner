@@ -597,7 +597,8 @@ module gold_miner::test_gold_miner {
         let i = 0;
         while (i < 10000) {
             gold_miner::mine(user);
-            let hungry = gold_miner::get_hunger_through_times(&address_of(user));
+            let hungry = gold_miner::get_hunger_through_times(address_of(user));
+
             if (hungry <= 600) {
                 gold_miner::eat_hambuger(user, hambuger::test_mint(user));
             };
