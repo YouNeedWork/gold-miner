@@ -380,9 +380,7 @@ module gold_miner::boost_nft {
     public fun burn_boost(nft: BoostNFT, owner: address) {
         let BoostNFT { name, multiplier, expiry: _, active: _ } = nft;
 
-        event::emit(
-            BoostBurned { name, multiplier, owner }
-        );
+        event::emit(BoostBurned { name, multiplier, owner });
     }
 
     #[test_only]

@@ -345,7 +345,6 @@ module gold_miner::gold_miner {
         //TODO: lack for event
     }
 
-
     fun create_invite(
         gold_miner: &mut GoldMiner, inviter: address, invitee: address
     ) {
@@ -544,7 +543,6 @@ module gold_miner::gold_miner {
 
         gold_miner.invite_reward_rate
     }
-
 
     #[view]
     public fun get_invite_reward(user: address): u256 {
