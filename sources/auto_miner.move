@@ -1,5 +1,6 @@
 module gold_miner::auto_miner {
     use std::signer::address_of;
+    use moveos_std::event::emit;
     use gold_miner::admin::AdminCap;
     use moveos_std::object::Object;
     use moveos_std::account;
@@ -82,6 +83,16 @@ module gold_miner::auto_miner {
 
     struct UpdateElectricMiningPowerEvent has copy, drop {
         new_power: u64
+    }
+
+    struct AutoMinerBurnEvent has copy, drop {
+        owner: address,
+        miner_type: u8,
+        mining_power: u64,
+        start_time: u64,
+        duration: u64,
+        last_claim: u64,
+        total_mined: u64
     }
 
     fun init(user: &signer) {
@@ -246,16 +257,24 @@ module gold_miner::auto_miner {
 
     public(friend) fun burn(auto_miner: AutoMiner) {
         let AutoMiner {
-            owner: _,
-            miner_type: _,
-            mining_power: _,
-            start_time: _,
-            duration: _,
-            last_claim: _,
-            total_mined: _
+            owner,
+            miner_type,
+            mining_power,
+            start_time,
+            duration,
+            last_claim,
+            total_mined
         } = auto_miner;
 
-        //TODO: lack event
+        emit(AutoMinerBurnEvent {
+            owner,
+            miner_type,
+            mining_power,
+            start_time,
+            duration,
+            last_claim,
+            total_mined
+        });
     }
 
     #[view]
