@@ -4,7 +4,7 @@ module gold_miner::test_gold_miner {
     use std::option;
     use std::signer;
     use std::signer::address_of;
-    use gold_miner::hambuger;
+    use gold_miner::hamburger;
     use gold_miner::gold_ore;
     use rooch_framework::simple_rng;
     use gold_miner::auto_miner;
@@ -586,7 +586,7 @@ module gold_miner::test_gold_miner {
             i = i + 1;
         };
 
-        let hambuger = hambuger::test_mint(user);
+        let hambuger = hamburger::test_mint(user);
         gold_miner::eat_hambuger(user, hambuger);
     }
 
@@ -600,7 +600,7 @@ module gold_miner::test_gold_miner {
             let hungry = gold_miner::get_hunger_through_times(address_of(user));
 
             if (hungry <= 600) {
-                gold_miner::eat_hambuger(user, hambuger::test_mint(user));
+                gold_miner::eat_hambuger(user, hamburger::test_mint(user));
             };
 
             i = i + 1;

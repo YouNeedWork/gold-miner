@@ -2,7 +2,7 @@ module gold_miner::gold_miner {
     use std::option;
     use std::u256;
     use std::u64;
-    use gold_miner::hambuger::Hambuger;
+    use gold_miner::hamburger::Hambuger;
     use gold_miner::boost_nft::BoostNFT;
     use moveos_std::account;
     use gold_miner::boost_nft;
@@ -21,7 +21,7 @@ module gold_miner::gold_miner {
     use gold_miner::copper_ore;
     use gold_miner::iron_ore;
     use gold_miner::refining_potion;
-    use gold_miner::hambuger;
+    use gold_miner::hamburger;
     use gold_miner::gold;
     use gold_miner::auto_miner;
 
@@ -337,7 +337,7 @@ module gold_miner::gold_miner {
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
         let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
 
-        hambuger::burn(&player_address, hambuger);
+        hamburger::burn(&player_address, hambuger);
         // Calculate and update hunger
         let hunger = calculate_and_update_hunger(gold_miner);
         //We add 301 energy for eating hambuger because it's decurase 1 energy by call calculate_and_update_hunger
@@ -434,7 +434,7 @@ module gold_miner::gold_miner {
                 }
             );
         } else if (number < 3) {
-            let hambuger = hambuger::mint(&player);
+            let hambuger = hamburger::mint(&player);
             object::transfer(hambuger, player);
             emit(EquipmentMintEvent { player, equipment_type: EQUIPMENT_TYPE_HAMBUGER });
         } else if (number < 8) {

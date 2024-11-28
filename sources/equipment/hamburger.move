@@ -1,4 +1,4 @@
-module gold_miner::hambuger {
+module gold_miner::hamburger {
     use std::string::utf8;
     use std::vector;
     use moveos_std::object;

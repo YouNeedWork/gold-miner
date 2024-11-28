@@ -27,7 +27,7 @@ module gold_miner::boost_nft {
 
     // Boost multipliers bps
     const BOOST_3X: u64 = 30000; // 3.0x represented as basis points
-    const BOOST_2X: u64 = 20000; // 2.0x for OG
+    const BOOST_2_5X: u64 = 25000; // 2.5x for OG
     const BOOST_1_7X: u64 = 17000; // 1.7x for early participants
 
     // Time constants (in seconds)
@@ -240,18 +240,17 @@ module gold_miner::boost_nft {
         while (i < can_mint) {
             event::emit(
                 BoostMinted {
-                    multiplier: BOOST_2X,
+                    multiplier: BOOST_2_5X,
                     expiry: 0,
                     owner: address_of(account),
                     price_paid: config.price_7_days
                 }
             );
 
-            charge_gas_token(account, config.price_7_days);
             config.total_7_days = config.total_7_days + config.price_7_days;
             let nft = BoostNFT {
                 name: string::utf8(b"OG"),
-                multiplier: BOOST_2X,
+                multiplier: BOOST_2_5X,
                 expiry: 0,
                 active: false
             };
@@ -298,7 +297,6 @@ module gold_miner::boost_nft {
                 }
             );
 
-            charge_gas_token(account, config.price_7_days);
             let nft = BoostNFT {
                 name: string::utf8(b"Early"),
                 multiplier: BOOST_1_7X,
@@ -403,7 +401,7 @@ module gold_miner::boost_nft {
     public fun test_init_og_2x(user: &signer): Object<BoostNFT> {
         let nft = BoostNFT {
             name: string::utf8(b"Boost"),
-            multiplier: BOOST_2X,
+            multiplier: BOOST_2_5X,
             expiry: 0,
             active: false
         };
