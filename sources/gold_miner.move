@@ -2,7 +2,7 @@ module gold_miner::gold_miner {
     use std::option;
     use std::u256;
     use std::u64;
-    use gold_miner::hamburger::Hambuger;
+    use gold_miner::hamburger::{Hamburger};
     use gold_miner::boost_nft::BoostNFT;
     use moveos_std::account;
     use gold_miner::boost_nft;
@@ -351,7 +351,7 @@ module gold_miner::gold_miner {
     }
 
     public entry fun eat_hambuger(
-        user: &signer, hambuger: Object<Hambuger>
+        user: &signer, hambuger: Object<Hamburger>
     ) {
         // Get player address
         let player_address = address_of(user);
@@ -492,15 +492,9 @@ module gold_miner::gold_miner {
     public fun get_hunger_through_times(player_address: address): u64 {
         let gold_miner = account::borrow_resource<MineInfo>(player_address);
         let now = timestamp::now_seconds();
-        let time_passed = u64::divide_and_round_up(now - gold_miner.last_update, 60); // 1 energy per minute
-        let hunger =
-            if (gold_miner.hunger >= 1000) {
-                gold_miner.hunger // Already at max
-            } else {
-                // Add 1 energy per second up to max
-                u64::min(gold_miner.hunger + time_passed, 1000)
-            };
-        hunger
+        let time_passed = (now - gold_miner.last_update) / 60; // 1 energy per minute
+
+        u64::min(gold_miner.hunger + time_passed, 1000)
     }
 
     // views function
