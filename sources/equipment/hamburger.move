@@ -10,8 +10,8 @@ module gold_miner::hamburger {
 
     friend gold_miner::gold_miner;
 
-    /// The Hambuger NFT type
-    struct Hambuger has key, store {}
+    /// The Hamburger NFT type
+    struct Hamburger has key, store {}
 
     /// Event emitted when a new Hambuger is minted
     struct MintHambugerEvent has copy, drop {
@@ -33,7 +33,7 @@ module gold_miner::hamburger {
             utf8(b"https://app.goldminer.life/nft/hambuger.png") // placeholder URL
         ];
 
-        let dis = display::display<Hambuger>();
+        let dis = display::display<Hamburger>();
         let key_len = vector::length(&keys);
         while (key_len > 0) {
             let key = vector::pop_back(&mut keys);
@@ -44,21 +44,21 @@ module gold_miner::hamburger {
     }
 
     /// Create a new Hambuger NFT
-    public(friend) fun mint(user: &address): Object<Hambuger> {
-        let hambuger = Hambuger {};
+    public(friend) fun mint(user: &address): Object<Hamburger> {
+        let hambuger = Hamburger {};
 
         event::emit(MintHambugerEvent { user: *user });
         object::new_named_object(hambuger)
     }
 
     /// Burns a Hambuger NFT, destroying it permanently
-    public(friend) fun burn(user: &address, hambuger: Object<Hambuger>) {
-        let Hambuger {} = object::remove(hambuger);
+    public(friend) fun burn(user: &address, hambuger: Object<Hamburger>) {
+        let Hamburger {} = object::remove(hambuger);
         event::emit(BurnHambugerEvent { user: *user });
     }
 
     #[test_only]
-    public fun test_mint(user: &signer): Object<Hambuger> {
+    public fun test_mint(user: &signer): Object<Hamburger> {
         mint(&address_of(user))
     }
 }
