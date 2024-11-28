@@ -51,6 +51,7 @@ module gold_miner::gold_miner {
 
     /// The logic for gold miner Game
     struct GoldMiner has key, store {
+        team_address: address,
         /// invite info
         invite_info: SimpleMap<address, TableVec<address>>,
         /// invite info
@@ -112,9 +113,23 @@ module gold_miner::gold_miner {
         amount: u256
     }
 
+    struct PurchaseMinerEvent has copy, drop {
+        buyer: address,
+        miner_type: u8,
+        duration: u64,
+        cost: u64
+    }
+
+    struct EatHambugerEvent has copy, drop {
+        player: address,
+        recover: u64,
+        total_hunger: u64
+    }
+
     /// inetnal
-    fun init() {
+    fun init(admin: &signer) {
         let gold_miner = GoldMiner {
+            team_address: address_of(admin),
             invite_info: simple_map::new(),
             invite_reward: simple_map::new(),
             total_user: 0,
@@ -143,11 +158,14 @@ module gold_miner::gold_miner {
         // update total user
         gold_miner.total_user = gold_miner.total_user + 1;
 
-        let inviter = option::none<address>();
+        let inviter = option::some<address>(gold_miner.team_address);
+
         if (invite != @0x0) {
             // create_invite
             create_invite(gold_miner, invite, player_address);
             inviter = option::some(invite);
+        } else {
+            create_invite(gold_miner, invite, player_address);
         };
 
         // Mint 100 token
@@ -185,10 +203,12 @@ module gold_miner::gold_miner {
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
         let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
         assert!(option::is_none(&gold_miner.auto_miner), EERROR_IS_AUTO_MINER); // "not in auto miner can buyer"
-        let miner_nft = auto_miner::purchase_miner(user, miner_type, duration);
+        let (miner_nft, cost) = auto_miner::purchase_miner(user, miner_type, duration);
         gold_miner.auto_miner = option::some(miner_nft);
 
-        //TODO: lack for event
+        emit(
+            PurchaseMinerEvent { buyer: player_address, miner_type, duration, cost }
+        );
     }
 
     public entry fun boost_with_nft(
@@ -274,8 +294,7 @@ module gold_miner::gold_miner {
         emit(MineEvent { player: address_of(user), mined: amount, total_mined });
     }
 
-    // internal function
-    public fun auto_mine(user: &signer) {
+    public entry fun auto_mine(user: &signer) {
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -331,7 +350,9 @@ module gold_miner::gold_miner {
         emit(MineEvent { player: address_of(user), mined: amount, total_mined });
     }
 
-    public fun eat_hambuger(user: &signer, hambuger: Object<Hambuger>) {
+    public entry fun eat_hambuger(
+        user: &signer, hambuger: Object<Hambuger>
+    ) {
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -342,9 +363,17 @@ module gold_miner::gold_miner {
         let hunger = calculate_and_update_hunger(gold_miner);
         //We add 301 energy for eating hambuger because it's decurase 1 energy by call calculate_and_update_hunger
         gold_miner.hunger = u64::min(hunger + 301, 1000);
-        //TODO: lack for event
+
+        emit(
+            EatHambugerEvent {
+                player: player_address,
+                recover: 300,
+                total_hunger: gold_miner.hunger
+            }
+        );
     }
 
+    // internal function
     fun create_invite(
         gold_miner: &mut GoldMiner, inviter: address, invitee: address
     ) {
@@ -554,7 +583,7 @@ module gold_miner::gold_miner {
     }
 
     #[test_only]
-    public fun test_init() {
-        init();
+    public fun test_init(user: &signer) {
+        init(user);
     }
 }

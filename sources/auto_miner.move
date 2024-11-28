@@ -98,7 +98,7 @@ module gold_miner::auto_miner {
 
     public(friend) fun purchase_miner(
         user: &signer, miner_type: u8, duration: u64
-    ): AutoMiner {
+    ): (AutoMiner, u64) {
         let cost = calculate_cost(miner_type, duration);
         let mining_power = get_mining_power(miner_type);
 
@@ -134,7 +134,7 @@ module gold_miner::auto_miner {
             MinerPurchaseEvent { owner: address_of(user), miner_type, duration, cost }
         );
 
-        auto_miner
+        (auto_miner, cost)
     }
 
     fun calculate_cost(miner_type: u8, duration: u64): u64 {

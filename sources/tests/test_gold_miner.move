@@ -24,7 +24,7 @@ module gold_miner::test_gold_miner {
     #[only_test]
     fun test_init(user: &signer) {
         rooch_framework::genesis::init_for_test();
-        gold_miner::test_init();
+        gold_miner::test_init(user);
         gold::test_init();
         auto_miner::test_init(user);
 
@@ -34,7 +34,7 @@ module gold_miner::test_gold_miner {
     #[test(user = @0x42)]
     fun test_start(user: &signer) {
         rooch_framework::genesis::init_for_test();
-        gold_miner::test_init();
+        gold_miner::test_init(user);
         gold::test_init();
         gold_miner::start(user, @0x41);
 
@@ -50,7 +50,7 @@ module gold_miner::test_gold_miner {
     #[expected_failure(abort_code = 100002)]
     fun test_failed_start_twice(user: &signer) {
         rooch_framework::genesis::init_for_test();
-        gold_miner::test_init();
+        gold_miner::test_init(user);
         gold::test_init();
 
         gold_miner::start(user, @0x41);
