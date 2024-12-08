@@ -1,6 +1,8 @@
 module gold_miner::tasks {
     use std::bcs;
+    use std::option;
     use std::signer::address_of;
+    use std::string;
     use std::vector;
     use moveos_std::event::emit;
     use gold_miner::admin::AdminCap;
@@ -11,12 +13,25 @@ module gold_miner::tasks {
     use moveos_std::account;
     use gold_miner::gold::{Self};
     use rooch_framework::account_coin_store;
+    use twitter_binding::twitter_account;
+    use grow_bitcoin::grow_information_v3::{Self, GrowProjectList};
 
     /// Error codes
     const EERROR_INVALID_SIGNATURE: u64 = 300001;
     const EERROR_TASK_ALREADY_CLAIMED: u64 = 300002;
     const EERROR_TENANT_NOT_REGISTERED: u64 = 300003;
     const EERROR_NOT_AUTHORIZED: u64 = 300004;
+    const E_INVALID_LEVEL_TYPE: u64 = 300005;
+
+    // tasks id
+    const VOTE_TASK_LEVEL_0: u64 = 11000;
+    const VOTE_TASK_LEVEL_1: u64 = 11001;
+    const VOTE_TASK_LEVEL_2: u64 = 11002;
+    const VOTE_TASK_LEVEL_3: u64 = 11003;
+    const VOTE_TASK_LEVEL_4: u64 = 11004;
+    const VOTE_TASK_LEVEL_5: u64 = 11005;
+
+    const BIND_X_TASK_ID: u64 = 10001;
 
     /// Tenant configuration
     struct Config has key, store {
@@ -57,6 +72,97 @@ module gold_miner::tasks {
         emit(OracleAddressChangedEvent { oracle_address });
     }
 
+    public entry fun complete_twitter_bind(user: &signer) {
+        init_record(user);
+
+        let player_address = address_of(user);
+        let task_record = account::borrow_mut_resource<TaskRecord>(player_address);
+        assert!(
+            !vector::contains(&task_record.completed_tasks, &BIND_X_TASK_ID),
+            EERROR_TASK_ALREADY_CLAIMED
+        );
+        vector::push_back(&mut task_record.completed_tasks, BIND_X_TASK_ID);
+
+        let maybe_bind = twitter_account::resolve_author_id_by_address(player_address);
+        assert!(option::is_some(&maybe_bind), EERROR_TENANT_NOT_REGISTERED);
+
+        let reward = 100_000_000_000; //FIXME: changed to 10k GOLD
+
+        // Mint and transfer reward
+        let treasury_obj = gold::get_treasury();
+        let treasury = object::borrow_mut(treasury_obj);
+        let reward_coins = gold::mint(treasury, reward);
+        account_coin_store::deposit(player_address, reward_coins);
+
+        // Emit completion event
+        event::emit(
+            TaskCompletedEvent { player: player_address, task_id: BIND_X_TASK_ID, reward }
+        );
+    }
+
+    public entry fun complete_vote(
+        user: &signer, grow_project_list_obj: &Object<GrowProjectList>, level: u64
+    ) {
+        init_record(user);
+        let player_address = address_of(user);
+        let task_record = account::borrow_mut_resource<TaskRecord>(player_address);
+
+        assert!(
+            level == VOTE_TASK_LEVEL_0
+                || level == VOTE_TASK_LEVEL_1
+                || level == VOTE_TASK_LEVEL_2
+                || level == VOTE_TASK_LEVEL_3
+                || level == VOTE_TASK_LEVEL_4
+                || level == VOTE_TASK_LEVEL_5,
+            E_INVALID_LEVEL_TYPE
+        );
+
+        assert!(
+            !vector::contains(&task_record.completed_tasks, &level),
+            EERROR_TASK_ALREADY_CLAIMED
+        );
+        vector::push_back(&mut task_record.completed_tasks, level);
+
+        let vote =
+            grow_information_v3::get_vote(
+                grow_project_list_obj, player_address, string::utf8(b"goldminer")
+            );
+        let reward =
+            if (level == VOTE_TASK_LEVEL_0) {
+                assert!(vote >= 10000, EERROR_NOT_AUTHORIZED);
+                100_000_000
+            } else if (level == VOTE_TASK_LEVEL_1) {
+                assert!(vote >= 100000, EERROR_NOT_AUTHORIZED);
+                1_000_000_000
+            } else if (level == VOTE_TASK_LEVEL_2) {
+                assert!(vote >= 1000000, EERROR_NOT_AUTHORIZED);
+                10_000_000_000
+            } else if (level == VOTE_TASK_LEVEL_3) {
+                assert!(vote >= 10000000, EERROR_NOT_AUTHORIZED);
+                100_000_000_000
+            } else if (level == VOTE_TASK_LEVEL_4) {
+                assert!(vote >= 100000000, EERROR_NOT_AUTHORIZED);
+                1_000_000_000_000
+            } else if (level == VOTE_TASK_LEVEL_5) {
+                assert!(vote >= 1000000000, EERROR_NOT_AUTHORIZED);
+                10_000_000_000_000
+            } else {
+                abort EERROR_NOT_AUTHORIZED;
+                0
+            };
+
+        // Mint and transfer reward
+        let treasury_obj = gold::get_treasury();
+        let treasury = object::borrow_mut(treasury_obj);
+        let reward_coins = gold::mint(treasury, reward);
+        account_coin_store::deposit(player_address, reward_coins);
+
+        // Emit completion event
+        event::emit(
+            TaskCompletedEvent { player: player_address, task_id: BIND_X_TASK_ID, reward }
+        );
+    }
+
     /// Claim reward for completing a task
     public entry fun claim_task_reward(
         user: &signer,
@@ -64,6 +170,8 @@ module gold_miner::tasks {
         reward: u256,
         signature: vector<u8>
     ) {
+        init_record(user);
+
         // Verify tenant exists and is active
         let config = account::borrow_resource<Config>(@gold_miner);
         let player_address = address_of(user);
@@ -105,6 +213,13 @@ module gold_miner::tasks {
     public fun is_task_completed(player: address, task_id: u64): bool {
         let task_record = account::borrow_resource<TaskRecord>(player);
         vector::contains(&task_record.completed_tasks, &task_id)
+    }
+
+    fun init_record(user: &signer) {
+        if (!account::exists_resource<TaskRecord>(address_of(user))) {
+            let record = TaskRecord { completed_tasks: vector::empty() };
+            account::move_resource_to(user, record);
+        }
     }
 
     /// Internal function to verify oracle signature

@@ -9,6 +9,7 @@ module gold_miner::hamburger {
     use std::signer::address_of;
 
     friend gold_miner::gold_miner;
+    friend gold_miner::daily_check_in;
 
     /// The Hamburger NFT type
     struct Hamburger has key, store {}

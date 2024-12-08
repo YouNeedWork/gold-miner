@@ -497,6 +497,44 @@ module gold_miner::gold_miner {
         u64::min(gold_miner.hunger + time_passed, 1000)
     }
 
+    public fun get_auto_mine_harvest_amount(player_address: address): u256 {
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_resource<MineInfo>(player_address);
+        assert!(option::is_some(&gold_miner.auto_miner), EERROR_NOT_AUTO_MINER); // "Not auto miner"
+
+        // Get auto miner object
+        let auto_miner = option::borrow(&gold_miner.auto_miner);
+        // Get claim amount for per minute
+        let base_amount = (auto_miner::harvest_amount(auto_miner) as u256);
+
+        // Get GoldMiner object to access basic_mining_amount
+        let gold_miner_obj_id = object::named_object_id<GoldMiner>();
+        let gold_miner_obj = borrow_mut_object_shared<GoldMiner>(gold_miner_obj_id);
+        let gold_miner_state = object::borrow(gold_miner_obj);
+
+        // Calculate base amount by rewrite with decimal
+        let base_amount = base_amount * gold_miner_state.basic_mining_amount;
+
+        // Calculate multiplier based on staking status
+        let multiplier = 10000; // Base 1x multiplier
+
+        // handle btc stake
+        if (grow_bitcoin::exists_stake_at_address(player_address)) {
+            multiplier = multiplier + 20000;
+        };
+
+        // handle NFT stake
+        if (option::is_some(&gold_miner.boost_nft)) {
+            let nft_multiplier =
+                boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
+            multiplier = multiplier + nft_multiplier;
+        };
+
+        let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
+
+        amount
+    }
+
     // views function
     #[view]
     public fun get_mined(miner_obj: &Object<MineInfo>): u256 {

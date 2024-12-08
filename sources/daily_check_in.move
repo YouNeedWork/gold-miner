@@ -1,5 +1,6 @@
 module gold_miner::daily_check_in {
     use std::signer::address_of;
+    use gold_miner::hamburger;
     use moveos_std::timestamp;
     use moveos_std::account;
     use moveos_std::event;
@@ -68,11 +69,14 @@ module gold_miner::daily_check_in {
 
         let user_address = address_of(user);
         let current_time = now_seconds();
-        let today_start = current_time - (current_time % 86400000);
-
+        //let today_start = current_time - (current_time % 86400000);
         let record = account::borrow_mut_resource<CheckInRecord>(user_address);
 
-        assert!(record.last_check_in < today_start, E_ALREADY_CHECKED_IN);
+        if (record.total_days != 0) {
+            assert!(
+                (record.last_check_in + 86400000) <= current_time, E_ALREADY_CHECKED_IN
+            );
+        };
 
         record.last_check_in = current_time;
         record.total_days = record.total_days + 1;
@@ -93,6 +97,14 @@ module gold_miner::daily_check_in {
                 total_days: record.total_days
             }
         );
+
+        if (record.total_days == 1) {
+            //give 2 hamburger
+            let hambuger = hamburger::mint(&user_address);
+            object::transfer(hambuger, user_address);
+            //let hambuger = hamburger::mint(&user_address);
+            //object::transfer(hambuger, user_address);
+        };
 
         if (record.total_days == 7) {
             let amount = config.seven_day_bonus;
@@ -159,17 +171,30 @@ module gold_miner::daily_check_in {
     public fun get_next_reward(user: address): u256 {
         let config = account::borrow_resource<Config>(@gold_miner);
         let record = account::borrow_resource<CheckInRecord>(user);
-        if (record.total_days < 7) {
-            config.check_in_reward
-        } else if (record.total_days < 30) {
+        if (record.total_days == 7) {
             config.seven_day_bonus
-        } else if (record.total_days < 100) {
+        } else if (record.total_days == 30) {
             config.thirty_day_bonus
-        } else if (record.total_days < 365) {
+        } else if (record.total_days == 100) {
             config.one_hundred_day_bonus
-        } else {
+        } else if (record.total_days == 365) {
             config.one_year_bonus
+        } else {
+            config.check_in_reward
         }
+    }
+
+    public fun can_check_in(user: address): u256 {
+        let config = account::borrow_resource<Config>(@gold_miner);
+        if (!account::exists_resource<CheckInRecord>(user)) {
+            return config.check_in_reward;
+        };
+
+        let record = account::borrow_resource<CheckInRecord>(user);
+        let current_time = now_seconds();
+        if ((record.last_check_in + 86400000) <= current_time) {
+            get_next_reward(user)
+        } else { 0 }
     }
 
     #[test_only]

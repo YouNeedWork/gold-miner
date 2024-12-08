@@ -249,8 +249,23 @@ module gold_miner::auto_miner {
 
         // Calculate rewards
         let time_since_last_claim = now - auto_miner.last_claim;
-        let rewards = time_since_last_claim * auto_miner.mining_power / 60; //per minute
+        let rewards = time_since_last_claim * auto_miner.mining_power; //per second
         auto_miner.last_claim = now;
+
+        rewards
+    }
+
+    public fun harvest_amount(auto_miner: &AutoMiner): u64 {
+        let now = timestamp::now_seconds();
+
+        let now =
+            if (now > auto_miner.start_time + auto_miner.duration) {
+                auto_miner.start_time + auto_miner.duration
+            } else { now };
+
+        // Calculate rewards
+        let time_since_last_claim = now - auto_miner.last_claim;
+        let rewards = time_since_last_claim * auto_miner.mining_power; //per second
 
         rewards
     }
@@ -266,15 +281,17 @@ module gold_miner::auto_miner {
             total_mined
         } = auto_miner;
 
-        emit(AutoMinerBurnEvent {
-            owner,
-            miner_type,
-            mining_power,
-            start_time,
-            duration,
-            last_claim,
-            total_mined
-        });
+        emit(
+            AutoMinerBurnEvent {
+                owner,
+                miner_type,
+                mining_power,
+                start_time,
+                duration,
+                last_claim,
+                total_mined
+            }
+        );
     }
 
     #[view]
