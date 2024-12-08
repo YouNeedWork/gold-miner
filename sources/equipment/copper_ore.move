@@ -54,7 +54,7 @@ module gold_miner::copper_ore {
 
         event::emit(MintCopperOreEvent { rarity });
 
-        object::new_named_object(copper_ore)
+        object::new(copper_ore)
     }
 
     /// Burns a CopperOre NFT, destroying it permanently

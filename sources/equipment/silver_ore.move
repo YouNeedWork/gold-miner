@@ -54,7 +54,7 @@ module gold_miner::silver_ore {
 
         event::emit(MintSilverOreEvent { rarity });
 
-        object::new_named_object(silver_ore)
+        object::new(silver_ore)
     }
 
     /// Burns a SilverOre NFT, destroying it permanently

@@ -49,7 +49,7 @@ module gold_miner::hamburger {
         let hambuger = Hamburger {};
 
         event::emit(MintHambugerEvent { user: *user });
-        object::new_named_object(hambuger)
+        object::new(hambuger)
     }
 
     /// Burns a Hambuger NFT, destroying it permanently

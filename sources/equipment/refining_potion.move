@@ -46,7 +46,7 @@ module gold_miner::refining_potion {
 
         event::emit(MintRefiningPotionEvent {});
 
-        object::new_named_object(refining_potion)
+        object::new(refining_potion)
     }
 
     /// Burns a RefiningPotion NFT, destroying it permanently

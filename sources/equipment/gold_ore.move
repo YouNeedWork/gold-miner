@@ -54,7 +54,7 @@ module gold_miner::gold_ore {
 
         event::emit(MintGoldOreEvent { rarity });
 
-        object::new_named_object(gold_ore)
+        object::new(gold_ore)
     }
 
     /// Burns a GoldOre NFT, destroying it permanently

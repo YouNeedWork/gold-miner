@@ -102,8 +102,9 @@ module gold_miner::daily_check_in {
             //give 2 hamburger
             let hambuger = hamburger::mint(&user_address);
             object::transfer(hambuger, user_address);
-            //let hambuger = hamburger::mint(&user_address);
-            //object::transfer(hambuger, user_address);
+
+            let hambuger = hamburger::mint(&user_address);
+            object::transfer(hambuger, user_address);
         };
 
         if (record.total_days == 7) {

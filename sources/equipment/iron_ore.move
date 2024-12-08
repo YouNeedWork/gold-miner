@@ -54,7 +54,7 @@ module gold_miner::iron_ore {
 
         event::emit(MintIronOreEvent { rarity });
 
-        object::new_named_object(iron_ore)
+        object::new(iron_ore)
     }
 
     /// Burns a IronOre NFT, destroying it permanently
