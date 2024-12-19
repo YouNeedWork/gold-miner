@@ -21,6 +21,7 @@ module gold_miner::gold {
     struct Gold has key, store {}
 
     struct Treasury has key {
+        supply:u256,
         coin_info: Object<CoinInfo<Gold>>
     }
 
@@ -36,15 +37,20 @@ module gold_miner::gold {
                 DECIMALS
             );
 
-        let treasury_obj = object::new_named_object(Treasury { coin_info: coin_info_obj });
+        let treasury_obj = object::new_named_object(Treasury {supply:0, coin_info: coin_info_obj });
         object::to_shared(treasury_obj);
     }
 
     public(friend) fun mint(treasury: &mut Treasury, amount: u256): Coin<Gold> {
+        treasury.supply = treasury.supply + amount;
+
         coin::mint(&mut treasury.coin_info, amount)
     }
 
     public(friend) fun burn(treasury: &mut Treasury, c: Coin<Gold>) {
+        let amount = coin::value(&c);
+        treasury.supply = treasury.supply - amount;
+
         coin::burn(&mut treasury.coin_info, c)
     }
 

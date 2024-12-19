@@ -198,6 +198,7 @@ module gold_miner::boost_nft {
             expiry: timestamp::now_seconds() + duration,
             active: false
         };
+
         event::emit(
             BoostMinted {
                 multiplier: BOOST_3X,
@@ -207,7 +208,7 @@ module gold_miner::boost_nft {
             }
         );
 
-        object::transfer(object::new_named_object(nft), address_of(account));
+        object::transfer(object::new(nft), address_of(account));
     }
 
     // Create an OG 2x boost NFT (permanent)
@@ -254,7 +255,7 @@ module gold_miner::boost_nft {
                 expiry: 0,
                 active: false
             };
-            object::transfer(object::new_named_object(nft), address_of(account));
+            object::transfer(object::new(nft), address_of(account));
             i = i + 1;
         };
 
@@ -305,7 +306,7 @@ module gold_miner::boost_nft {
             };
 
             config.total_7_days = config.total_7_days + config.price_7_days;
-            object::transfer(object::new_named_object(nft), address_of(account));
+            object::transfer(object::new(nft), address_of(account));
             i = i + 1;
         };
 
@@ -353,7 +354,7 @@ module gold_miner::boost_nft {
     }
 
     public(friend) fun new_object(nft_obj: BoostNFT): Object<BoostNFT> {
-        object::new_named_object<BoostNFT>(nft_obj)
+        object::new<BoostNFT>(nft_obj)
     }
 
     // Deactivate a boost NFT
@@ -392,7 +393,7 @@ module gold_miner::boost_nft {
             active: false
         };
 
-        object::new_named_object(nft)
+        object::new(nft)
     }
 
     #[test_only]
@@ -403,7 +404,7 @@ module gold_miner::boost_nft {
             expiry: 0,
             active: false
         };
-        object::new_named_object(nft)
+        object::new(nft)
     }
 
     #[test_only]
@@ -414,7 +415,7 @@ module gold_miner::boost_nft {
             expiry: 0,
             active: false
         };
-        object::new_named_object(nft)
+        object::new(nft)
     }
 
     // Add view functions to check user's mint counts

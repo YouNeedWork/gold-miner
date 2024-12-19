@@ -60,8 +60,6 @@ module gold_miner::gold_miner {
         total_user: u256,
         /// total_tap
         total_tap: u256,
-        /// total_mined
-        total_mined: u256,
         /// basic mining amount
         basic_mining_amount: u256,
         /// invite reward bps
@@ -134,7 +132,6 @@ module gold_miner::gold_miner {
             invite_reward: simple_map::new(),
             total_user: 0,
             total_tap: 0,
-            total_mined: 0,
             basic_mining_amount: 1_000_000,
             invite_reward_rate: 1500
         };
@@ -158,6 +155,7 @@ module gold_miner::gold_miner {
         // update total user
         gold_miner.total_user = gold_miner.total_user + 1;
 
+        let team_address = gold_miner.team_address;
         let inviter = option::some<address>(gold_miner.team_address);
 
         if (invite != @0x0) {
@@ -165,7 +163,7 @@ module gold_miner::gold_miner {
             create_invite(gold_miner, invite, player_address);
             inviter = option::some(invite);
         } else {
-            create_invite(gold_miner, invite, player_address);
+            create_invite(gold_miner, team_address, player_address);
         };
 
         // Mint 100 token
@@ -246,7 +244,6 @@ module gold_miner::gold_miner {
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
         let gold_miner = account::borrow_mut_resource<MineInfo>(player_address);
-        assert!(option::is_none(&gold_miner.auto_miner), EERROR_IS_AUTO_MINER); // "not in auto miner can tap"
 
         // Calculate and update hunger
         let _hunger = calculate_and_update_hunger(gold_miner);
@@ -254,7 +251,9 @@ module gold_miner::gold_miner {
         // Calculate base amount
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = borrow_mut_object_shared<GoldMiner>(gold_miner_obj_id);
-        let gold_miner_state = object::borrow(gold_miner_obj);
+        let gold_miner_state = object::borrow_mut(gold_miner_obj);
+        gold_miner_state.total_tap = gold_miner_state.total_tap + 1;
+
         let base_amount = gold_miner_state.basic_mining_amount;
 
         // Calculate multiplier based on staking status
@@ -488,6 +487,35 @@ module gold_miner::gold_miner {
         }
     }
 
+
+    fun boost_rate(player_address:address,base:u256) :u256 {
+       let rate = get_boost_rate(player_address);
+
+        base * rate
+    }
+
+    public fun get_boost_rate(player_address:address):u256 {
+        assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
+        let gold_miner = account::borrow_resource<MineInfo>(player_address);
+
+        // Calculate multiplier based on staking status
+        let multiplier = 10000; // Base 1x multiplier
+
+        // handle btc stake
+        if (grow_bitcoin::exists_stake_at_address(player_address)) {
+            multiplier = multiplier + 20000;
+        };
+
+        // handle NFT stake
+        if (option::is_some(&gold_miner.boost_nft)) {
+            let nft_multiplier =
+                boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
+            multiplier = multiplier + nft_multiplier;
+        };
+
+        multiplier / BPS
+    }
+
     #[view]
     public fun get_hunger_through_times(player_address: address): u64 {
         let gold_miner = account::borrow_resource<MineInfo>(player_address);
@@ -578,14 +606,6 @@ module gold_miner::gold_miner {
         gold_miner.total_tap
     }
 
-    #[view]
-    public fun get_total_mined(): u256 {
-        let gold_miner_obj_id = object::named_object_id<GoldMiner>();
-        let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
-        let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
-
-        gold_miner.total_mined
-    }
 
     #[view]
     public fun get_basic_mining_amount(): u256 {
@@ -602,10 +622,10 @@ module gold_miner::gold_miner {
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
         let gold_miner = object::borrow<GoldMiner>(gold_miner_obj);
 
-        gold_miner.invite_reward_rate
-    }
+            gold_miner.invite_reward_rate
+        }
 
-    #[view]
+        #[view]
     public fun get_invite_reward(user: address): u256 {
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = object::borrow_object<GoldMiner>(gold_miner_obj_id);
