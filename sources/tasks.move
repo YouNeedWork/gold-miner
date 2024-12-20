@@ -86,7 +86,7 @@ module gold_miner::tasks {
         let maybe_bind = twitter_account::resolve_author_id_by_address(player_address);
         assert!(option::is_some(&maybe_bind), EERROR_TENANT_NOT_REGISTERED);
 
-        let reward = 100_000_000_000; //FIXME: changed to 10k GOLD
+        let reward = 10_000_000_000;
 
         // Mint and transfer reward
         let treasury_obj = gold::get_treasury();
@@ -129,22 +129,22 @@ module gold_miner::tasks {
             );
         let reward =
             if (level == VOTE_TASK_LEVEL_0) {
-                assert!(vote >= 10000, EERROR_NOT_AUTHORIZED);
-                100_000_000
+                assert!(vote >= 10_000, EERROR_NOT_AUTHORIZED);
+                10_000_000
             } else if (level == VOTE_TASK_LEVEL_1) {
-                assert!(vote >= 100000, EERROR_NOT_AUTHORIZED);
-                1_000_000_000
+                assert!(vote >= 100_000, EERROR_NOT_AUTHORIZED);
+                100_000_000
             } else if (level == VOTE_TASK_LEVEL_2) {
-                assert!(vote >= 1000000, EERROR_NOT_AUTHORIZED);
-                10_000_000_000
+                assert!(vote >= 10_000_000, EERROR_NOT_AUTHORIZED);
+                1_000_000_000
             } else if (level == VOTE_TASK_LEVEL_3) {
-                assert!(vote >= 10000000, EERROR_NOT_AUTHORIZED);
-                100_000_000_000
+                assert!(vote >= 100_000_000, EERROR_NOT_AUTHORIZED);
+                10_000_000_000
             } else if (level == VOTE_TASK_LEVEL_4) {
-                assert!(vote >= 100000000, EERROR_NOT_AUTHORIZED);
-                1_000_000_000_000
+                assert!(vote >= 1_000_000_000, EERROR_NOT_AUTHORIZED);
+                100_000_000_000
             } else if (level == VOTE_TASK_LEVEL_5) {
-                assert!(vote >= 1000000000, EERROR_NOT_AUTHORIZED);
+                assert!(vote >= 10_000_000_000, EERROR_NOT_AUTHORIZED);
                 10_000_000_000_000
             } else {
                 abort EERROR_NOT_AUTHORIZED;

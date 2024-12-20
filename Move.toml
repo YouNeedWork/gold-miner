@@ -11,7 +11,7 @@ grow_bitcoin = { local = "/home/yusong/works/cargo/rooch/apps/grow_bitcoin"}
 twitter_binding = { local = "/home/yusong/works/cargo/rooch/apps/twitter_binding"}
 
 [addresses]
-gold_miner = "0x945787de1737399daf1b72b46228179c286a978c8878e1d2ff51a58a872ed013"
+gold_miner = "0xef98788d657de7354f9375a9e082343397d70b752dd59c97a065f6fe5e132152"
 grow_bitcoin = "0x701c21bf1c8cd5af8c42983890d8ca55e7a820171b8e744c13f2d9998bf76cc3"
 app_admin = "0x701c21bf1c8cd5af8c42983890d8ca55e7a820171b8e744c13f2d9998bf76cc3"
 twitter_binding = "0x701c21bf1c8cd5af8c42983890d8ca55e7a820171b8e744c13f2d9998bf76cc3"

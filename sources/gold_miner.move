@@ -402,11 +402,20 @@ module gold_miner::gold_miner {
         // Get GoldMiner object to access invite_reward_rate
         let gold_miner_obj_id = object::named_object_id<GoldMiner>();
         let gold_miner_obj = borrow_mut_object_shared<GoldMiner>(gold_miner_obj_id);
-        let gold_miner_state = object::borrow(gold_miner_obj);
+        let gold_miner = object::borrow_mut(gold_miner_obj);
 
         let inviter = *option::borrow(&miner.inviter);
+        if (!simple_map::contains_key(&gold_miner.invite_reward, &inviter)) {
+            simple_map::add(
+                &mut gold_miner.invite_reward, inviter, 0
+            );
+        };
+
         let reward_amount =
-            u256::multiple_and_divide(amount, gold_miner_state.invite_reward_rate, 10000);
+            u256::multiple_and_divide(amount, gold_miner.invite_reward_rate, 10000);
+
+        let invite_reward = simple_map::borrow_mut(&mut gold_miner.invite_reward, &inviter);
+        *invite_reward = *invite_reward+reward_amount;
 
         // Mint reward tokens for inviter
         let treasury = object::borrow_mut(treasury_obj);

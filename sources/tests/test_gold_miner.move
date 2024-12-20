@@ -608,7 +608,6 @@ module gold_miner::test_gold_miner {
 
         // Check equipment counts based on probabilities
         // Gold Ore: 0.05% = 5 expected
-        // FIXME: This test is flaky due to randomness
         // Only genrate raom number 1 times, with same results
         //let gold_ore_count = object::account_named_object_id<gold_ore::GoldOre>(@0x42);
         //assert!(object::exists_object_with_type<gold_ore::GoldOre>(gold_ore_count), 1);
