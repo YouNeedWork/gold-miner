@@ -158,13 +158,7 @@ module gold_miner::gold_miner {
         let team_address = gold_miner.team_address;
         let inviter = option::some<address>(gold_miner.team_address);
 
-        if (invite != @0x0) {
-            // create_invite
-            create_invite(gold_miner, invite, player_address);
-            inviter = option::some(invite);
-        } else {
-            create_invite(gold_miner, team_address, player_address);
-        };
+
 
         // Mint 100 token
         let amount = 100 * gold_miner.basic_mining_amount;
@@ -185,6 +179,22 @@ module gold_miner::gold_miner {
         let gold_mine = gold::mint(treasury, amount);
         account_coin_store::do_accept_coin<gold::Gold>(user);
         account_coin_store::deposit(address_of(user), gold_mine);
+
+
+        if (invite != @0x0) {
+            // create_invite
+            create_invite(gold_miner, invite, player_address);
+            inviter = option::some(invite);
+
+            let gold_mine = gold::mint(treasury, amount);
+            account_coin_store::deposit(invite, gold_mine);
+        } else {
+            create_invite(gold_miner, team_address, player_address);
+
+            let gold_mine = gold::mint(treasury, amount);
+            account_coin_store::deposit(team_address, gold_mine);
+        };
+
 
         // Handle inviter rewards if exists
         handle_inviter_reward(user, treasury_obj, &mut miner, amount);
