@@ -27,8 +27,8 @@ module gold_miner::boost_nft {
 
     // Boost multipliers bps
     const BOOST_3X: u64 = 30000; // 3.0x represented as basis points
-    const BOOST_2_5X: u64 = 25000; // 2.5x for OG
-    const BOOST_1_7X: u64 = 17000; // 1.7x for early participants
+    const BOOST_5X: u64 = 50000; // 2.5x for OG
+    const BOOST_2X: u64 = 20000; // 1.7x for early participants
 
     // Time constants (in seconds)
     const SEVEN_DAYS: u64 = 7 * 24 * 60 * 60;
@@ -136,8 +136,21 @@ module gold_miner::boost_nft {
         }
     }
 
+
+    public entry fun update_price(
+        _: &mut Object<AdminCap>,
+        price_7_days: u256,
+        price_30_days: u256
+    ) {
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
+        assert!(price_7_days > 0 && price_30_days > 0, 0);
+
+        config.price_7_days = price_7_days;
+        config.price_30_days = price_30_days;
+    }
+
     /// update config
-    public fun update_config(
+    public entry fun update_config(
         _: &mut Object<AdminCap>,
         price_7_days: u256,
         price_30_days: u256,
@@ -241,7 +254,7 @@ module gold_miner::boost_nft {
         while (i < can_mint) {
             event::emit(
                 BoostMinted {
-                    multiplier: BOOST_2_5X,
+                    multiplier: BOOST_5X,
                     expiry: 0,
                     owner: address_of(account),
                     price_paid: config.price_7_days
@@ -251,7 +264,7 @@ module gold_miner::boost_nft {
             config.total_7_days = config.total_7_days + config.price_7_days;
             let nft = BoostNFT {
                 name: string::utf8(b"OG"),
-                multiplier: BOOST_2_5X,
+                multiplier: BOOST_5X,
                 expiry: 0,
                 active: false
             };
@@ -291,7 +304,7 @@ module gold_miner::boost_nft {
         while (i < can_mint) {
             event::emit(
                 BoostMinted {
-                    multiplier: BOOST_1_7X,
+                    multiplier: BOOST_2X,
                     expiry: 0,
                     owner: address_of(account),
                     price_paid: config.price_7_days
@@ -300,7 +313,7 @@ module gold_miner::boost_nft {
 
             let nft = BoostNFT {
                 name: string::utf8(b"Early"),
-                multiplier: BOOST_1_7X,
+                multiplier: BOOST_2X,
                 expiry: 0,
                 active: false
             };
@@ -400,7 +413,7 @@ module gold_miner::boost_nft {
     public fun test_init_og_2x(user: &signer): Object<BoostNFT> {
         let nft = BoostNFT {
             name: string::utf8(b"Boost"),
-            multiplier: BOOST_2_5X,
+            multiplier: BOOST_5X,
             expiry: 0,
             active: false
         };
@@ -411,7 +424,7 @@ module gold_miner::boost_nft {
     public fun test_init_early_1_7x(user: &signer): Object<BoostNFT> {
         let nft = BoostNFT {
             name: string::utf8(b"Boost"),
-            multiplier: BOOST_1_7X,
+            multiplier: BOOST_5X,
             expiry: 0,
             active: false
         };

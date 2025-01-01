@@ -186,7 +186,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update manual miner cost. Only admin can call.
-    public fun update_manual_miner_cost(
+    public entry fun update_manual_miner_cost(
         _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
@@ -195,7 +195,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update hydro miner cost. Only admin can call.
-    public fun update_hydro_miner_cost(
+    public entry fun update_hydro_miner_cost(
         _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
@@ -204,7 +204,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update electric miner cost. Only admin can call.
-    public fun update_electric_miner_cost(
+    public entry fun update_electric_miner_cost(
         _: &mut Object<AdminCap>, new_cost: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
@@ -213,7 +213,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update manual mining power. Only admin can call.
-    public fun update_manual_mining_power(
+    public entry fun update_manual_mining_power(
         _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
@@ -222,7 +222,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update hydro mining power. Only admin can call.
-    public fun update_hydro_mining_power(
+    public entry fun update_hydro_mining_power(
         _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);
@@ -231,7 +231,7 @@ module gold_miner::auto_miner {
     }
 
     /// Update electric mining power. Only admin can call.
-    public fun update_electric_mining_power(
+    public entry fun update_electric_mining_power(
         _: &mut Object<AdminCap>, new_power: u64
     ) {
         let config = account::borrow_mut_resource<Config>(@gold_miner);

@@ -133,7 +133,7 @@ module gold_miner::tasks {
                 10_000_000
             } else if (level == VOTE_TASK_LEVEL_1) {
                 assert!(vote >= 100_000, EERROR_NOT_AUTHORIZED);
-                100_000_000
+                1_000_000_000
             } else if (level == VOTE_TASK_LEVEL_2) {
                 assert!(vote >= 10_000_000, EERROR_NOT_AUTHORIZED);
                 10_000_000_000
