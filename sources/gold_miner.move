@@ -264,7 +264,7 @@ module gold_miner::gold_miner {
         let gold_miner_state = object::borrow_mut(gold_miner_obj);
         gold_miner_state.total_tap = gold_miner_state.total_tap + 1;
 
-        let base_amount = gold_miner_state.basic_mining_amount;
+        let base_amount = 100 * gold_miner_state.basic_mining_amount;
 
         // Calculate multiplier based on staking status
         let multiplier: u256 = 10000;
