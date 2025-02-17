@@ -26,8 +26,8 @@ module gold_miner::boost_nft {
     const EERROR_INVALID_PROOF: u64 = 100003;
 
     // Boost multipliers bps
-    const BOOST_3X: u64 = 30000; // 3.0x represented as basis points
-    const BOOST_5X: u64 = 50000; // 2.5x for OG
+    const BOOST_3X: u64 = 30000; // 3.0 x represented as basis points
+    const BOOST_5X: u64 = 50000; // 5.0 x for OG
     const BOOST_2X: u64 = 20000; // 2.0 x for early participants
 
     // Time constants (in seconds)

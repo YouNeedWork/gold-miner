@@ -250,6 +250,7 @@ module gold_miner::gold_miner {
     }
 
     public entry fun mine(user: &signer) {
+
         // Get player address
         let player_address = address_of(user);
         assert!(account::exists_resource<MineInfo>(player_address), EERROR_NOT_STARTED); // "Not started mining"
@@ -276,7 +277,6 @@ module gold_miner::gold_miner {
 
         // handle NFT stake
         if (option::is_some(&gold_miner.boost_nft)
-            && boost_nft::is_active(option::borrow(&gold_miner.boost_nft))
             && !boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
             let nft_multiplier =
                 boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
@@ -301,6 +301,10 @@ module gold_miner::gold_miner {
         random_equipment(player_address);
 
         emit(MineEvent { player: address_of(user), mined: amount, total_mined });
+
+        if (boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
+            remove_boost_nft(user);
+        }
     }
 
     public entry fun auto_mine(user: &signer) {
@@ -332,6 +336,7 @@ module gold_miner::gold_miner {
         // Calculate multiplier based on staking status
         let multiplier = 10000; // Base 1x multiplier
 
+        /*
         // handle btc stake
         if (grow_bitcoin::exists_stake_at_address(player_address)) {
             multiplier = multiplier + 20000;
@@ -343,6 +348,7 @@ module gold_miner::gold_miner {
                 boost_nft::get_multiplier(option::borrow_mut(&mut gold_miner.boost_nft));
             multiplier = multiplier + nft_multiplier;
         };
+        */
 
         let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
         gold_miner.mined = gold_miner.mined + amount;
@@ -565,6 +571,7 @@ module gold_miner::gold_miner {
         // Calculate multiplier based on staking status
         let multiplier = 10000; // Base 1x multiplier
 
+        /*
         // handle btc stake
         if (grow_bitcoin::exists_stake_at_address(player_address)) {
             multiplier = multiplier + 20000;
@@ -576,6 +583,7 @@ module gold_miner::gold_miner {
                 boost_nft::get_multiplier(option::borrow(&gold_miner.boost_nft));
             multiplier = multiplier + nft_multiplier;
         };
+        */
 
         let amount = u256::multiple_and_divide(base_amount, multiplier, BPS);
 
