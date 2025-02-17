@@ -302,7 +302,8 @@ module gold_miner::gold_miner {
 
         emit(MineEvent { player: address_of(user), mined: amount, total_mined });
 
-        if (boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
+        if (option::is_some(&gold_miner.boost_nft)
+            && boost_nft::is_expired(option::borrow(&gold_miner.boost_nft))) {
             remove_boost_nft(user);
         }
     }
