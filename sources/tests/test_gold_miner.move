@@ -139,7 +139,7 @@ module gold_miner::test_gold_miner {
         test_init(user);
 
         // Simulate BTC staking
-        grow_bitcoin::test_init(user);
+        //grow_bitcoin::test_init(user);
         gold_miner::mine(user);
 
         // With BTC stake multiplier (2x), amount should be 2 * basic_mining_amount
@@ -232,7 +232,7 @@ module gold_miner::test_gold_miner {
     fun test_mine_with_both_boosts(user: &signer) {
         test_init(user);
         // Add both BTC stake and NFT boost
-        grow_bitcoin::test_init(user);
+        //grow_bitcoin::test_init(user);
         let boost_3x = boost_nft::test_init_3x(user);
         gold_miner::boost_with_nft(user, boost_3x);
         gold_miner::mine(user);

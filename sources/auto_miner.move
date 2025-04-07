@@ -141,6 +141,7 @@ module gold_miner::auto_miner {
         let treasury = object::borrow_mut(treasury_obj);
         let cost_coin = account_coin_store::withdraw<Gold>(user, (cost as u256));
         gold::burn(treasury, cost_coin);
+
         event::emit(
             MinerPurchaseEvent { owner: address_of(user), miner_type, duration, cost }
         );

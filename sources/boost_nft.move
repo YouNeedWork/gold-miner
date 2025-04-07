@@ -24,6 +24,7 @@ module gold_miner::boost_nft {
     const EBoostExpired: u64 = 100001;
     const ENotAuthorized: u64 = 100002;
     const EERROR_INVALID_PROOF: u64 = 100003;
+    const EERROR_INVALID_AMOUNT: u64 = 100004;
 
     // Boost multipliers bps
     const BOOST_3X: u64 = 30000; // 3.0 x represented as basis points
@@ -178,6 +179,24 @@ module gold_miner::boost_nft {
         );
     }
 
+    /// update config
+    public entry fun update_og_merkle_root(
+        _: &mut Object<AdminCap>,
+        og_merkle_root: vector<u8>,
+    ) {
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
+        config.og_merkle_root = og_merkle_root;
+    }
+
+    /// update config
+    public entry fun update_early_merkle_root(
+        _: &mut Object<AdminCap>,
+        early_merkle_root: vector<u8>
+    ) {
+        let config = account::borrow_mut_resource<Config>(@gold_miner);
+        config.early_merkle_root = early_merkle_root;
+    }
+
     // Initialize user mint record if not exists
     fun ensure_user_mint_record(user: &signer) {
         if (!account::exists_resource<UserMintRecord>(address_of(user))) {
@@ -225,7 +244,7 @@ module gold_miner::boost_nft {
     }
 
     // Create an OG 2x boost NFT (permanent)
-    entry fun mint_og_boost(
+    public entry fun mint_og_boost(
         account: &signer, proof: vector<vector<u8>>, amount: u64
     ) {
         ensure_user_mint_record(account);
@@ -233,7 +252,7 @@ module gold_miner::boost_nft {
             account::borrow_mut_resource<UserMintRecord>(address_of(account));
 
         // Check if user has reached their personal mint limit
-        assert!(user_record.og_minted < amount, 0);
+        assert!(user_record.og_minted < amount, EERROR_INVALID_AMOUNT);
 
         let config = account::borrow_mut_resource<Config>(@gold_miner);
 
@@ -284,21 +303,23 @@ module gold_miner::boost_nft {
             account::borrow_mut_resource<UserMintRecord>(address_of(account));
 
         // Check if user has reached their personal mint limit
-        assert!(user_record.early_minted < amount, 0);
+        assert!(user_record.early_minted < amount, EERROR_INVALID_AMOUNT);
 
         let bytes_user = bcs::to_bytes(&address_of(account));
         vector::append(&mut bytes_user, bcs::to_bytes(&amount));
         let config = account::borrow_mut_resource<Config>(@gold_miner);
+
+
         assert!(
             merkle_proof::verify(
                 &proof,
                 config.early_merkle_root,
-                bytes_user
+                hash::sha2_256(bytes_user)
             ),
             EERROR_INVALID_PROOF
         );
 
-        let can_mint = amount - user_record.og_minted;
+        let can_mint = amount - user_record.early_minted;
         let i = 0;
 
         while (i < can_mint) {
@@ -323,7 +344,7 @@ module gold_miner::boost_nft {
             i = i + 1;
         };
 
-        user_record.early_minted = user_record.early_minted + amount;
+        user_record.early_minted = amount;
     }
 
     // Activate a boost NFT
